@@ -1,14 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "_version": "18.2.0",
+
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "lib": ["es2023"],
+    "target": "es2022",
+
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-  }
+    "module": "esnext",
+    "moduleResolution": "node"
+  },
+  "exclude": ["packages"]
 }

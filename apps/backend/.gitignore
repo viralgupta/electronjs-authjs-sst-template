@@ -1,32 +1,15 @@
-# prod
-dist/
-lambda.zip
+# dependencies
+node_modules
 
-# dev
-.yarn/
-!.yarn/releases
-.vscode/*
-!.vscode/launch.json
-!.vscode/*.code-snippets
-.idea/workspace.xml
-.idea/usage.statistics.xml
-.idea/shelf
+# sst
+.sst
+.build
 
-# deps
-node_modules/
-
-# env
-.env
-.env.production
-
-# logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# opennext
+.open-next
 
 # misc
 .DS_Store
+
+# local env files
+.env*.local

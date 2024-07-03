@@ -1,17 +1,24 @@
 {
   "name": "backend",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild --bundle --outfile=./dist/index.js --platform=node --target=node20 ./src/index.ts",
-    "zip": "zip -j lambda.zip dist/index.js",
-    "update": "aws lambda update-function-code --zip-file fileb://lambda.zip --function-name hello",
-    "deploy": "run-s build zip update"
+    "dev": "sst dev",
+    "build": "sst build",
+    "deploy": "sst deploy",
+    "remove": "sst remove",
+    "console": "sst console",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "esbuild": "^0.21.4",
-    "npm-run-all2": "^6.2.0"
+    "sst": "^2.43.3",
+    "aws-cdk-lib": "2.142.1",
+    "constructs": "10.3.0",
+    "typescript": "^5.5.3",
+    "@tsconfig/node18": "^18.2.4"
   },
-  "dependencies": {
-    "hono": "^4.4.10"
-  }
+  "workspaces": [
+    "packages/*"
+  ]
 }
