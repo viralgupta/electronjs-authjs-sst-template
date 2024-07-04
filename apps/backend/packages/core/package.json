@@ -7,11 +7,13 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
-    "vitest": "^1.6.0",
     "@types/node": "^20.14.9",
-    "sst": "^2.43.3"
+    "sst": "^2.43.3",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
+    "@types/express": "^4.17.21",
+    "express": "^4.19.2",
     "zod": "^3.23.8"
   }
 }

@@ -1,16 +1,8 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "_version": "18.2.0",
-
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "exclude": ["packages"],
   "compilerOptions": {
-    "lib": ["es2023"],
-    "target": "es2022",
-
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "module": "esnext",
     "moduleResolution": "node"
-  },
-  "exclude": ["packages"]
+  }
 }
