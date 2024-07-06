@@ -1,6 +1,8 @@
+import { user } from './../drizzle/schema';
 import { getAuthConfig } from './auth/index';
 import express from "express";
 import { authenticatedUser } from './middlewear/authenticateUser';
+import db from '../drizzle/db';
 
 const app = express();
 
@@ -11,8 +13,6 @@ app.get("/protected", authenticatedUser, (req, res) => {
     res.send("Hello World from protected route!");
 });
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
+
 
 export { app };
