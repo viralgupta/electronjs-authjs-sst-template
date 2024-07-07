@@ -7,6 +7,7 @@ import {
   integer,
   numeric,
   date,
+  timestamp,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -144,12 +145,28 @@ export const phone_number_relation = relations(phone_number, ({ one }) => ({
 export const item = pgTable("item", {
   id: uuid("item_id").primaryKey().defaultRandom().notNull(),
   name: text("item_name").notNull(),
-  multiplier: integer("item_multiplier").notNull().default(1),
+  multiplier: numeric("item_multiplier", { precision: 10, scale: 2 })
+    .notNull()
+    .default("1.00"),
   category: text("item_category", {
-    enum: ["Adhesives", "Plywood", "Laminate", "Veneer", "Decorative", "Moulding", "Miscellaneous", "Door"],
+    enum: [
+      "Adhesives",
+      "Plywood",
+      "Laminate",
+      "Veneer",
+      "Decorative",
+      "Moulding",
+      "Miscellaneous",
+      "Door",
+    ],
   }).notNull(),
-  quantity: integer("item_quantity").notNull().default(0),
-  min_quantity: integer("item_min_quantity").default(0),
+  quantity: numeric("item_quantity", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  min_quantity: numeric("item_min_quantity", {
+    precision: 10,
+    scale: 2,
+  }).default("0.00"),
   min_rate: numeric("item_min_rate", { precision: 10, scale: 2 }),
   sale_rate: numeric("item_min_rate", { precision: 10, scale: 2 }).notNull(),
   rate_dimension: text("item_rate_dimension", {
@@ -199,11 +216,17 @@ export const order = pgTable("order", {
   discount: numeric("order_discount", { precision: 10, scale: 2 }).notNull(),
   amount_paid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
 
-  carpanter_commision: numeric("order_carpanter_commision", {precision: 10, scale: 2}),
-  architect_commision: numeric("order_architect_commision", {precision: 10, scale: 2}),
+  carpanter_commision: numeric("order_carpanter_commision", {
+    precision: 10,
+    scale: 2,
+  }),
+  architect_commision: numeric("order_architect_commision", {
+    precision: 10,
+    scale: 2,
+  }),
 
-  created_at: text("created_at").default("now()").notNull(),
-  updated_at: text("updated_at").default("now()").notNull(),
+  created_at: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const order_relation = relations(order, ({ one, many }) => ({
@@ -232,18 +255,31 @@ export const order_relation = relations(order, ({ one, many }) => ({
 
 export const order_item = pgTable("order_item", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
-  order_id: uuid("order_item_order_id").references(() => order.id).notNull(),
-  item_id: uuid("order_item_item_id").references(() => item.id).notNull(),
-  quantity: integer("order_item_quantity").notNull(),
+  order_id: uuid("order_item_order_id")
+    .references(() => order.id)
+    .notNull(),
+  item_id: uuid("order_item_item_id")
+    .references(() => item.id)
+    .notNull(),
+  quantity: numeric("order_item_quantity", { precision: 10, scale: 2 }).notNull(),
   rate: numeric("order_item_rate", { precision: 10, scale: 2 }).notNull(),
-  total_value: numeric("order_item_total_value", { precision: 10, scale: 2 }).notNull(),
-  carpanter_commision: numeric("order_item_carpanter_commision", {precision: 10, scale: 2}),
-  carpanter_commision_type: text("order_item_carpanter_commision_type", {
-    enum: ["percentage", "perPiece"]
+  total_value: numeric("order_item_total_value", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  carpanter_commision: numeric("order_item_carpanter_commision", {
+    precision: 10,
+    scale: 2,
   }),
-  architect_commision: numeric("order_item_architect_commision", {precision: 10, scale: 2}),
+  carpanter_commision_type: text("order_item_carpanter_commision_type", {
+    enum: ["percentage", "perPiece"],
+  }),
+  architect_commision: numeric("order_item_architect_commision", {
+    precision: 10,
+    scale: 2,
+  }),
   architect_commision_type: text("order_item_architect_commision_type", {
-    enum: ["percentage", "perPiece"]
+    enum: ["percentage", "perPiece"],
   }),
 });
 
@@ -265,8 +301,8 @@ export const estimate = pgTable("estimate", {
     precision: 10,
     scale: 2,
   }).notNull(),
-  created_at: text("created_at").default("now()").notNull(),
-  updated_at: text("updated_at").default("now()").notNull(),
+  created_at: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const estimate_relation = relations(estimate, ({ one, many }) => ({
@@ -279,11 +315,18 @@ export const estimate_relation = relations(estimate, ({ one, many }) => ({
 
 export const estimate_item = pgTable("estimate_item", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
-  estimate_id: uuid("estimate_item_order_id").references(() => estimate.id).notNull(),
-  item_id: uuid("estimate_item_item_id").references(() => item.id).notNull(),
-  quantity: integer("order_item_quantity").notNull(),
-  rate: numeric("order_item_rate", { precision: 10, scale: 2 }).notNull(),
-  total_value: numeric("order_item_total_value", { precision: 10, scale: 2 }).notNull(),
+  estimate_id: uuid("estimate_item_estimate_id")
+    .references(() => estimate.id)
+    .notNull(),
+  item_id: uuid("estimate_item_item_id")
+    .references(() => item.id)
+    .notNull(),
+  quantity: numeric("estimate_item_quantity", { precision: 10, scale: 2 }).notNull(),
+  rate: numeric("estimate_item_rate", { precision: 10, scale: 2 }).notNull(),
+  total_value: numeric("estimate_item_total_value", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
 });
 
 export const estimate_item_relation = relations(estimate_item, ({ one }) => ({
