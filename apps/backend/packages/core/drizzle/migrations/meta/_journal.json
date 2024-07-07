@@ -22,6 +22,13 @@
       "when": 1720363348923,
       "tag": "0002_used-numeric-for-quantity",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1720387293490,
+      "tag": "0003_added-whatsapp-details",
+      "breakpoints": true
     }
   ]
 }

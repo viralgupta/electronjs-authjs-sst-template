@@ -71,6 +71,7 @@ export const customer_address_relation = relations(
 export const architect = pgTable("architect", {
   id: uuid("architect_id").defaultRandom().notNull(),
   name: text("architect_name").notNull(),
+  profileUrl: text("architect_profileUrl"),
   area: text("architect_area").notNull(),
   balance: numeric("architect_balance", { precision: 10, scale: 2 })
     .notNull()
@@ -85,6 +86,7 @@ export const architect_relation = relations(architect, ({ many }) => ({
 export const carpanter = pgTable("carpanter", {
   id: uuid("carpanter_id").defaultRandom().notNull(),
   name: text("carpanter_name").notNull(),
+  profileUrl: text("carpanter_profileUrl"),
   area: text("carpanter_area").notNull(),
   balance: numeric("carpanter_balance", { precision: 10, scale: 2 })
     .notNull()
@@ -99,13 +101,11 @@ export const carpanter_relation = relations(carpanter, ({ many }) => ({
 export const driver = pgTable("driver", {
   id: uuid("driver_id").defaultRandom().notNull(),
   name: text("driver_name").notNull(),
+  profileUrl: text("driver_profileUrl"),
   vehicle_number: text("driver_vehicle_number"),
   size_of_vehicle: text("driver_size_of_vehicle", {
     enum: ["rickshaw", "tempo", "chota-hathi", "tata", "truck"],
   }).notNull(),
-  balance: numeric("driver_balance", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0.00"),
 });
 
 export const driver_relation = relations(driver, ({ many }) => ({
@@ -120,6 +120,7 @@ export const phone_number = pgTable("phone_number", {
   carpanter_id: uuid("carpanter_id").references(() => carpanter.id),
   driver_id: uuid("driver_id").references(() => driver.id),
   phone_number: text("phone_number").notNull(),
+  whatsappChatId: text("phone_number_whatsappChatId"),
   isPrimary: boolean("phone_number_isPrimary").default(false).notNull(),
 });
 
@@ -181,6 +182,8 @@ export const item_relation = relations(item, ({ many }) => ({
 
 export const order = pgTable("order", {
   id: uuid("order_id").primaryKey().defaultRandom().notNull(),
+
+  note: text("order_note"),
 
   customer_id: uuid("customer_id").references(() => customer.id),
   carpanter_id: uuid("carpanter_id").references(() => carpanter.id),
