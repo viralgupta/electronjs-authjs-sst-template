@@ -8,6 +8,13 @@
       "when": 1720300754972,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1720332823448,
+      "tag": "0001_modified-enums-commision-type",
+      "breakpoints": true
     }
   ]
 }

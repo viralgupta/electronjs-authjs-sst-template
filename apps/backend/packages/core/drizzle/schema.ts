@@ -100,7 +100,7 @@ export const driver = pgTable("driver", {
   name: text("driver_name").notNull(),
   vehicle_number: text("driver_vehicle_number"),
   size_of_vehicle: text("driver_size_of_vehicle", {
-    enum: ["rickshaw", "tempo", "chota-hathi", "truck"], // to be updated
+    enum: ["rickshaw", "tempo", "chota-hathi", "tata", "truck"],
   }).notNull(),
   balance: numeric("driver_balance", { precision: 10, scale: 2 })
     .notNull()
@@ -146,14 +146,14 @@ export const item = pgTable("item", {
   name: text("item_name").notNull(),
   multiplier: integer("item_multiplier").notNull().default(1),
   category: text("item_category", {
-    enum: ["Adhesives", "Plywood", "Mica", "Veneer", "Decorative"], // to be updated
+    enum: ["Adhesives", "Plywood", "Laminate", "Veneer", "Decorative", "Moulding", "Miscellaneous", "Door"],
   }).notNull(),
   quantity: integer("item_quantity").notNull().default(0),
   min_quantity: integer("item_min_quantity").default(0),
   min_rate: numeric("item_min_rate", { precision: 10, scale: 2 }),
   sale_rate: numeric("item_min_rate", { precision: 10, scale: 2 }).notNull(),
   rate_dimension: text("item_rate_dimension", {
-    enum: ["ft", "mt", "sq/ft", "sq/mt", "piece"], // to be updated
+    enum: ["rft", "sq/ft", "piece"],
   }).notNull(),
 });
 
@@ -238,7 +238,13 @@ export const order_item = pgTable("order_item", {
   rate: numeric("order_item_rate", { precision: 10, scale: 2 }).notNull(),
   total_value: numeric("order_item_total_value", { precision: 10, scale: 2 }).notNull(),
   carpanter_commision: numeric("order_item_carpanter_commision", {precision: 10, scale: 2}),
+  carpanter_commision_type: text("order_item_carpanter_commision_type", {
+    enum: ["percentage", "perPiece"]
+  }),
   architect_commision: numeric("order_item_architect_commision", {precision: 10, scale: 2}),
+  architect_commision_type: text("order_item_architect_commision_type", {
+    enum: ["percentage", "perPiece"]
+  }),
 });
 
 export const order_item_relation = relations(order_item, ({ one }) => ({
