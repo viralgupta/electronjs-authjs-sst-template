@@ -1,10 +1,9 @@
 import express from "express"
 
+const estimateRouter = express.Router();
 
-const estimateRouter = express.Router()
-
-// estimateRouter.route('/createItem').post()
-// estimateRouter.route('/findItem').get()
-// estimateRouter.route('/editItem').put()
+estimateRouter.route('/createEstimate').post();
+estimateRouter.route('/findEstimate').get();
+estimateRouter.route('/editEstimate').put();
 
 export default estimateRouter;
