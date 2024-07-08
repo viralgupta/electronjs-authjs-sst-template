@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "ctc_cms",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -19,6 +19,7 @@
     "typescript": "^5.5.3"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ]
 }
