@@ -39,30 +39,30 @@ export const customer = pgTable("customer", {
 
 export const customer_relation = relations(customer, ({ many }) => ({
   phone_numbers: many(phone_number),
-  addresses: many(customer_address),
+  addresses: many(address),
   orders: many(order),
   estimates: many(estimate),
 }));
 
-export const customer_address = pgTable("customer_address", {
-  id: uuid("customer_address_id").defaultRandom().notNull().primaryKey(),
+export const address = pgTable("address", {
+  id: uuid("address_id").defaultRandom().notNull().primaryKey(),
   customer_id: uuid("customer_id")
     .references(() => customer.id)
     .notNull(),
-  address: varchar("customer_address", { length: 256 }).notNull(),
-  city: varchar("customer_city", { length: 30 }).notNull(),
-  state: varchar("customer_state", { length: 20 }).notNull(),
-  pincode: varchar("customer_pincode", { length: 8 }).notNull(),
-  isPrimary: boolean("customer_address_isPrimary").default(false),
-  latitude: numeric("customer_address_latitude", { precision: 10, scale: 7 }),
-  longitude: numeric("customer_address_longitude", { precision: 10, scale: 7 }),
+  address: varchar("address", { length: 256 }).notNull(),
+  city: varchar("address_city", { length: 30 }).notNull(),
+  state: varchar("address_state", { length: 20 }).notNull(),
+  pincode: varchar("address_pincode", { length: 8 }).notNull(),
+  isPrimary: boolean("address_isPrimary").default(false),
+  latitude: numeric("address_latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("address_longitude", { precision: 10, scale: 7 }),
 });
 
-export const customer_address_relation = relations(
-  customer_address,
+export const address_relation = relations(
+  address,
   ({ one }) => ({
     customer: one(customer, {
-      fields: [customer_address.customer_id],
+      fields: [address.customer_id],
       references: [customer.id],
     }),
   })
@@ -204,7 +204,7 @@ export const order = pgTable("order", {
 
   delivery_date: date("order_delivery_date"),
   delivery_address: uuid("order_address_id").references(
-    () => customer_address.id
+    () => address.id
   ),
 
   labour_frate_cost: real("order_labour_frate_cost").notNull(),
@@ -245,9 +245,9 @@ export const order_relation = relations(order, ({ one, many }) => ({
     fields: [order.driver_id],
     references: [driver.id],
   }),
-  order_address: one(customer_address, {
+  order_address: one(address, {
     fields: [order.delivery_address],
-    references: [customer_address.id],
+    references: [address.id],
   }),
   order_items: many(order_item),
 }));
