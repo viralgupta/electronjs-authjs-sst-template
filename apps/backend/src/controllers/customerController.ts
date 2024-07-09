@@ -1,27 +1,27 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, customer, phone_number } from "@db/schema";
-import { createCustomerSchema } from "@type/api/customer";
+import { addAddressType, createCustomerType } from "@type/api/customer";
+import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
 
-  const createCustomerSchemaAnswer = createCustomerSchema.safeParse(req.body);
+  const createCustomerTypeAnswer = createCustomerType.safeParse(req.body);
 
-  if (!createCustomerSchemaAnswer.success){
-    return res.status(400).json({success: false, message: "Input fields are not correct", error: createCustomerSchemaAnswer.error.flatten()})
+  if (!createCustomerTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: createCustomerTypeAnswer.error.flatten()})
   }
 
   try {
-
     const createdCustomer = await db.transaction(async (tx) => {
 
       const tCustomer = await tx.insert(customer).values({
-        name: createCustomerSchemaAnswer.data.name,
-        balance: createCustomerSchemaAnswer.data.balance,
+        name: createCustomerTypeAnswer.data.name,
+        balance: createCustomerTypeAnswer.data.balance,
       }).returning();
 
       await tx.insert(phone_number).values(
-        createCustomerSchemaAnswer.data.phone_numbers.map((phone_number) => {
+        createCustomerTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
             customer_id: tCustomer[0].id,
             phone_number: phone_number.phone_number,
@@ -32,7 +32,7 @@ const createCustomer = async (req: Request, res: Response) => {
         })
       )
       await tx.insert(address).values(
-        createCustomerSchemaAnswer.data.addresses.map((address) => {
+        createCustomerTypeAnswer.data.addresses.map((address) => {
           return {
             customer_id: tCustomer[0].id,
             address: address.address,
@@ -55,7 +55,35 @@ const createCustomer = async (req: Request, res: Response) => {
 }
 
 const addAddress = async (req: Request, res: Response) => {
+  const addAddressTypeAnswer = addAddressType.safeParse(req.body);
 
+  if (!addAddressTypeAnswer.success || !req.body.customer_id){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: addAddressTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    
+    const tCustomer = await db.select({id: customer.id}).from(customer).where(eq(customer.id, req.body.customer_id));
+    if(tCustomer.length === 0){
+      return res.status(400).json({ success: false, message: "Customer not found" });
+    }
+    await db.transaction(async (tx) => {
+      await tx.insert(address).values({
+        customer_id: tCustomer[0].id,
+        address: addAddressTypeAnswer.data.address,
+        city: addAddressTypeAnswer.data.city,
+        state: addAddressTypeAnswer.data.state,
+        pincode: addAddressTypeAnswer.data.pincode,
+        isPrimary: addAddressTypeAnswer.data.isPrimary,
+        latitude: addAddressTypeAnswer.data.latitude,
+        longitude: addAddressTypeAnswer.data.longitude
+      });
+    })
+
+    return res.status(201).json({success: true, message: "Address added successfully"});
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Unable to add address", error: error});
+  }
 }
 const editCustomer = async (req: Request, res: Response) => {}
 const settleBalance = async (req: Request, res: Response) => {}

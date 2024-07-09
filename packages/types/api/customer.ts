@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { phone_numberSchema } from "./miscellaneous";
+import { phone_numberType } from "./miscellaneous";
 
-export const addAddressSchema = z.object({
+export const addAddressType = z.object({
   address: z.string().max(256, "Address too long"),
   city: z.string().max(30, "City too long"),
   state: z.string().max(20, "State too long"),
@@ -11,7 +11,7 @@ export const addAddressSchema = z.object({
   longitude: z.number().optional(),
 })
 
-export const createCustomerSchema = z
+export const createCustomerType = z
   .object({
     name: z.string().min(2, "Name too short"),
     balance: z
@@ -20,10 +20,10 @@ export const createCustomerSchema = z
         message: "The number must be greater than or equal to 0.00",
       }),
     phone_numbers: z.array(
-      phone_numberSchema
+      phone_numberType
     ).min(1, "At least one phone number is required"),
     addresses: z.array(
-      addAddressSchema
+      addAddressType
     )
   })
   .strict("Too many fields in request body");

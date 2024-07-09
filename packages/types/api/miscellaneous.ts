@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const phone_numberSchema = z.object({
+export const phone_numberType = z.object({
   customer_id: z.string().optional(),
   architect_id: z.string().optional(),
   carpanter_id: z.string().optional(),
