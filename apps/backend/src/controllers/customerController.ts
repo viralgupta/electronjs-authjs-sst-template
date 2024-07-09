@@ -20,14 +20,18 @@ const createCustomer = async (req: Request, res: Response) => {
         balance: createCustomerSchemaAnswer.data.balance,
       }).returning();
 
-      await tx.insert(phone_number).values({
-        phone_number: createCustomerSchemaAnswer.data.phone_number,
-        country_code: createCustomerSchemaAnswer.data.country_code ?? null,
-        isPrimary: true,
-        customer_id: tCustomer[0].id
-      })
-      return tCustomer;
-
+      await tx.insert(phone_number).values(
+        createCustomerSchemaAnswer.data.phone_numbers.map((phone_number) => {
+          return {
+            customer_id: tCustomer[0].id,
+            phone_number: phone_number.phone_number,
+            country_code: phone_number.country_code,
+            isPrimary: phone_number.isPrimary,
+            whatsappChatId: phone_number.whatsappChatId
+          };
+        })
+      )      
+      return tCustomer[0];
     })
     
     return res.status(201).json({success: true, message: "Customer created successfully", data: createdCustomer});
@@ -36,7 +40,9 @@ const createCustomer = async (req: Request, res: Response) => {
   }
 }
 
-const addAddress = async (req: Request, res: Response) => {}
+const addAddress = async (req: Request, res: Response) => {
+  
+}
 const editCustomer = async (req: Request, res: Response) => {}
 const settleBalance = async (req: Request, res: Response) => {}
 const getCustomer = async (req: Request, res: Response) => {}
