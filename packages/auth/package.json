@@ -1,5 +1,5 @@
 {
-  "name": "@ctc-cms/backend",
+  "name": "@ctc-cms/auth",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -8,7 +8,12 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
+    "@types/express": "^4.17.21",
     "sst": "^2.43.3",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@auth/express": "^0.5.6",
+    "express": "^4.19.2"
   }
 }

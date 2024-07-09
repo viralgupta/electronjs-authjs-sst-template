@@ -4,7 +4,7 @@ import { API } from "./stacks/MyStack";
 export default {
   config(_input) {
     return {
-      name: "ctc-backend",
+      name: "ctc-cms",
       region: "ap-south-1",
     };
   },

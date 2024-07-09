@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "architect" (
 	"architect_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"architect_name" text NOT NULL,
+	"architect_profileUrl" text,
 	"architect_area" text NOT NULL,
 	"architect_balance" numeric(10, 2) DEFAULT '0.00' NOT NULL
 );
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "architect" (
 CREATE TABLE IF NOT EXISTS "carpanter" (
 	"carpanter_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"carpanter_name" text NOT NULL,
+	"carpanter_profileUrl" text,
 	"carpanter_area" text NOT NULL,
 	"carpanter_balance" numeric(10, 2) DEFAULT '0.00' NOT NULL
 );
@@ -35,41 +37,42 @@ CREATE TABLE IF NOT EXISTS "customer_address" (
 CREATE TABLE IF NOT EXISTS "driver" (
 	"driver_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"driver_name" text NOT NULL,
+	"driver_profileUrl" text,
 	"driver_vehicle_number" text,
-	"driver_size_of_vehicle" text NOT NULL,
-	"driver_balance" numeric(10, 2) DEFAULT '0.00' NOT NULL
+	"driver_size_of_vehicle" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "estimate" (
 	"estimate_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"customer_id" uuid,
 	"total_estimate_amount" numeric(10, 2) NOT NULL,
-	"created_at" text DEFAULT 'now()' NOT NULL,
-	"updated_at" text DEFAULT 'now()' NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "estimate_item" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"estimate_item_order_id" uuid NOT NULL,
+	"estimate_item_estimate_id" uuid NOT NULL,
 	"estimate_item_item_id" uuid NOT NULL,
-	"order_item_quantity" integer NOT NULL,
-	"order_item_rate" numeric(10, 2) NOT NULL,
-	"order_item_total_value" numeric(10, 2) NOT NULL
+	"estimate_item_quantity" numeric(10, 2) NOT NULL,
+	"estimate_item_rate" numeric(10, 2) NOT NULL,
+	"estimate_item_total_value" numeric(10, 2) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "item" (
 	"item_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"item_name" text NOT NULL,
-	"item_multiplier" integer DEFAULT 1 NOT NULL,
+	"item_multiplier" numeric(10, 2) DEFAULT '1.00' NOT NULL,
 	"item_category" text NOT NULL,
-	"item_quantity" integer DEFAULT 0 NOT NULL,
-	"item_min_quantity" integer DEFAULT 0,
+	"item_quantity" numeric(10, 2) DEFAULT '0.00' NOT NULL,
+	"item_min_quantity" numeric(10, 2) DEFAULT '0.00',
 	"item_min_rate" numeric(10, 2) NOT NULL,
 	"item_rate_dimension" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "order" (
 	"order_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"order_note" text,
 	"customer_id" uuid,
 	"carpanter_id" uuid,
 	"architect_id" uuid,
@@ -85,19 +88,21 @@ CREATE TABLE IF NOT EXISTS "order" (
 	"amount_paid" numeric(10, 2) NOT NULL,
 	"order_carpanter_commision" numeric(10, 2),
 	"order_architect_commision" numeric(10, 2),
-	"created_at" text DEFAULT 'now()' NOT NULL,
-	"updated_at" text DEFAULT 'now()' NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "order_item" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"order_item_order_id" uuid NOT NULL,
 	"order_item_item_id" uuid NOT NULL,
-	"order_item_quantity" integer NOT NULL,
+	"order_item_quantity" numeric(10, 2) NOT NULL,
 	"order_item_rate" numeric(10, 2) NOT NULL,
 	"order_item_total_value" numeric(10, 2) NOT NULL,
 	"order_item_carpanter_commision" numeric(10, 2),
-	"order_item_architect_commision" numeric(10, 2)
+	"order_item_carpanter_commision_type" text,
+	"order_item_architect_commision" numeric(10, 2),
+	"order_item_architect_commision_type" text
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "phone_number" (
@@ -106,7 +111,9 @@ CREATE TABLE IF NOT EXISTS "phone_number" (
 	"architect_id" uuid,
 	"carpanter_id" uuid,
 	"driver_id" uuid,
+	"phone_number_country_code" text NOT NULL,
 	"phone_number" text NOT NULL,
+	"phone_number_whatsappChatId" text,
 	"phone_number_isPrimary" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
@@ -132,7 +139,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "estimate_item" ADD CONSTRAINT "estimate_item_estimate_item_order_id_estimate_estimate_id_fk" FOREIGN KEY ("estimate_item_order_id") REFERENCES "public"."estimate"("estimate_id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "estimate_item" ADD CONSTRAINT "estimate_item_estimate_item_estimate_id_estimate_estimate_id_fk" FOREIGN KEY ("estimate_item_estimate_id") REFERENCES "public"."estimate"("estimate_id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

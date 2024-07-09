@@ -1,5 +1,5 @@
 {
-  "name": "@ctc-cms/backend",
+  "name": "@ctc-cms/types",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
   "devDependencies": {
     "@types/node": "^20.14.9",
     "sst": "^2.43.3",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "zod": "^3.23.8"
   }
 }

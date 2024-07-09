@@ -1,5 +1,5 @@
 {
-  "id": "0b6a5cdc-9416-4c82-87c3-3a83a1a695ad",
+  "id": "6a7206fa-7e70-4c74-ac6d-a45e6c6f9bfb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -20,6 +20,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "architect_profileUrl": {
+          "name": "architect_profileUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "architect_area": {
           "name": "architect_area",
@@ -56,6 +62,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "carpanter_profileUrl": {
+          "name": "carpanter_profileUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "carpanter_area": {
           "name": "carpanter_area",
@@ -217,6 +229,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "driver_profileUrl": {
+          "name": "driver_profileUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "driver_vehicle_number": {
           "name": "driver_vehicle_number",
           "type": "text",
@@ -228,13 +246,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "driver_balance": {
-          "name": "driver_balance",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0.00'"
         }
       },
       "indexes": {},
@@ -267,17 +278,17 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "text",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'now()'"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "text",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'now()'"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -310,8 +321,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "estimate_item_order_id": {
-          "name": "estimate_item_order_id",
+        "estimate_item_estimate_id": {
+          "name": "estimate_item_estimate_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -322,20 +333,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "order_item_quantity": {
-          "name": "order_item_quantity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "order_item_rate": {
-          "name": "order_item_rate",
+        "estimate_item_quantity": {
+          "name": "estimate_item_quantity",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
         },
-        "order_item_total_value": {
-          "name": "order_item_total_value",
+        "estimate_item_rate": {
+          "name": "estimate_item_rate",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estimate_item_total_value": {
+          "name": "estimate_item_total_value",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
@@ -343,12 +354,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "estimate_item_estimate_item_order_id_estimate_estimate_id_fk": {
-          "name": "estimate_item_estimate_item_order_id_estimate_estimate_id_fk",
+        "estimate_item_estimate_item_estimate_id_estimate_estimate_id_fk": {
+          "name": "estimate_item_estimate_item_estimate_id_estimate_estimate_id_fk",
           "tableFrom": "estimate_item",
           "tableTo": "estimate",
           "columnsFrom": [
-            "estimate_item_order_id"
+            "estimate_item_estimate_id"
           ],
           "columnsTo": [
             "estimate_id"
@@ -392,10 +403,10 @@
         },
         "item_multiplier": {
           "name": "item_multiplier",
-          "type": "integer",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true,
-          "default": 1
+          "default": "'1.00'"
         },
         "item_category": {
           "name": "item_category",
@@ -405,17 +416,17 @@
         },
         "item_quantity": {
           "name": "item_quantity",
-          "type": "integer",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "'0.00'"
         },
         "item_min_quantity": {
           "name": "item_min_quantity",
-          "type": "integer",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": false,
-          "default": 0
+          "default": "'0.00'"
         },
         "item_min_rate": {
           "name": "item_min_rate",
@@ -445,6 +456,12 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "order_note": {
+          "name": "order_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "customer_id": {
           "name": "customer_id",
@@ -541,17 +558,17 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "text",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'now()'"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "text",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'now()'"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -650,7 +667,7 @@
         },
         "order_item_quantity": {
           "name": "order_item_quantity",
-          "type": "integer",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
         },
@@ -672,9 +689,21 @@
           "primaryKey": false,
           "notNull": false
         },
+        "order_item_carpanter_commision_type": {
+          "name": "order_item_carpanter_commision_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "order_item_architect_commision": {
           "name": "order_item_architect_commision",
           "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order_item_architect_commision_type": {
+          "name": "order_item_architect_commision_type",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -746,11 +775,23 @@
           "primaryKey": false,
           "notNull": false
         },
+        "phone_number_country_code": {
+          "name": "phone_number_country_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "phone_number": {
           "name": "phone_number",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "phone_number_whatsappChatId": {
+          "name": "phone_number_whatsappChatId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "phone_number_isPrimary": {
           "name": "phone_number_isPrimary",

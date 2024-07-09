@@ -1,5 +1,5 @@
 {
-  "name": "@backend/functions",
+  "name": "@ctc-cms/functions",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -7,14 +7,11 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.140",
     "@types/node": "^20.14.9",
     "sst": "^2.43.3",
     "vitest": "^1.6.0"
   },
   "dependencies": {
-    "@types/aws-serverless-express": "^3.3.9",
-    "aws-serverless-express": "^3.4.0",
     "serverless-http": "^3.2.0"
   }
 }

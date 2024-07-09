@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import db from "@backend/core/drizzle/db";
-import { customer } from "../../drizzle/schema";
-import { createCustomerSchema } from "../types/api/customer";
+import db from "@db/db";
+import { customer } from "@db/schema";
+import { createCustomerSchema } from "@type/api/customer";
 
 const createCustomer = async (req: Request, res: Response) => {
 

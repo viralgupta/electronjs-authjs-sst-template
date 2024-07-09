@@ -1,5 +1,5 @@
 import express from "express";
-import { getAuthConfig } from "./auth/index";
+import { getAuthConfig } from "@auth/index";
 import { authenticatedUser } from "./middlewear/authenticateUser";
 import inventoryRouter from "./routes/inventoryRoutes";
 import architectRouter from "./routes/architectRoutes";
@@ -12,9 +12,10 @@ import miscellaneousRouter from "./routes/miscellaneousRouter";
 
 const app = express();
 
-app.use(express.json());
 app.set("trust proxy", true);
 app.use("/auth/*", getAuthConfig());
+
+app.use(express.json());
 // app.use("/api/*", authenticatedUser);
 
 app.use("/api/architect", architectRouter);
