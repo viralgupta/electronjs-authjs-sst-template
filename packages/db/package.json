@@ -5,8 +5,9 @@
   "scripts": {
     "test": "sst bind vitest",
     "typecheck": "tsc -noEmit",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push"
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

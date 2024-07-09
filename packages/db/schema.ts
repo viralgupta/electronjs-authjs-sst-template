@@ -53,8 +53,8 @@ export const customer_address = pgTable("customer_address", {
   city: varchar("customer_city", { length: 30 }).notNull(),
   state: varchar("customer_state", { length: 20 }).notNull(),
   pincode: varchar("customer_pincode", { length: 8 }).notNull(),
-  isDefault: boolean("customer_address_isDefault").default(false),
-  latitue: numeric("customer_address_latitue", { precision: 10, scale: 7 }),
+  isPrimary: boolean("customer_address_isPrimary").default(false),
+  latitude: numeric("customer_address_latitude", { precision: 10, scale: 7 }),
   longitude: numeric("customer_address_longitude", { precision: 10, scale: 7 }),
 });
 
