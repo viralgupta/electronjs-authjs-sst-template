@@ -8,32 +8,32 @@ import {
   numeric,
   date,
   timestamp,
+  varchar,
+  real,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
-  id: uuid("user_id").defaultRandom().notNull(),
-  name: text("user_name").notNull(),
-  phone_number: text("user_phone_number").unique().notNull(),
-  isAdmin: boolean("user_isAdmin").default(false).notNull(),
+  id: uuid("user_id").defaultRandom().notNull().primaryKey(),
+  name: varchar("user_name", { length: 30 }).notNull(),
+  phone_number: varchar("user_phone_number", { length: 10 }).unique().notNull(),
+  isAdmin: boolean("user_isAdmin").default(false),
   otp: integer("user_otp"),
 });
 
 export const customer = pgTable("customer", {
-  id: uuid("customer_id").defaultRandom().notNull(),
-  name: text("customer_name").notNull(),
-  priority: text("customer_priority", {
+  id: uuid("customer_id").defaultRandom().notNull().primaryKey(),
+  name: varchar("customer_name", { length: 50 }).notNull(),
+  profileUrl: text("customer_profileUrl"),
+  priority: varchar("customer_priority", {
     enum: ["Low", "Mid", "High"],
   })
-    .notNull()
     .default("Low"),
   balance: numeric("customer_balance", { precision: 10, scale: 2 })
-    .notNull()
     .default("0.00"),
   total_order_value: numeric("customer_total_order_value", {
     precision: 10,
     scale: 2,
   })
-    .notNull()
     .default("0.00"),
 });
 
@@ -45,15 +45,15 @@ export const customer_relation = relations(customer, ({ many }) => ({
 }));
 
 export const customer_address = pgTable("customer_address", {
-  id: uuid("customer_address_id").defaultRandom().notNull(),
+  id: uuid("customer_address_id").defaultRandom().notNull().primaryKey(),
   customer_id: uuid("customer_id")
     .references(() => customer.id)
     .notNull(),
-  address: text("customer_address").notNull(),
-  city: text("customer_city").notNull(),
-  state: text("customer_state").notNull(),
-  pincode: text("customer_pincode").notNull(),
-  isDefault: boolean("customer_address_isDefault").default(false).notNull(),
+  address: varchar("customer_address", { length: 256 }).notNull(),
+  city: varchar("customer_city", { length: 30 }).notNull(),
+  state: varchar("customer_state", { length: 20 }).notNull(),
+  pincode: varchar("customer_pincode", { length: 8 }).notNull(),
+  isDefault: boolean("customer_address_isDefault").default(false),
   latitue: numeric("customer_address_latitue", { precision: 10, scale: 7 }),
   longitude: numeric("customer_address_longitude", { precision: 10, scale: 7 }),
 });
@@ -69,12 +69,11 @@ export const customer_address_relation = relations(
 );
 
 export const architect = pgTable("architect", {
-  id: uuid("architect_id").defaultRandom().notNull(),
-  name: text("architect_name").notNull(),
+  id: uuid("architect_id").defaultRandom().notNull().primaryKey(),
+  name: varchar("architect_name", { length: 30 }).notNull(),
   profileUrl: text("architect_profileUrl"),
-  area: text("architect_area").notNull(),
+  area: varchar("architect_area", { length: 20 }).notNull(),
   balance: numeric("architect_balance", { precision: 10, scale: 2 })
-    .notNull()
     .default("0.00"),
 });
 
@@ -84,12 +83,11 @@ export const architect_relation = relations(architect, ({ many }) => ({
 }));
 
 export const carpanter = pgTable("carpanter", {
-  id: uuid("carpanter_id").defaultRandom().notNull(),
-  name: text("carpanter_name").notNull(),
+  id: uuid("carpanter_id").defaultRandom().notNull().primaryKey(),
+  name: varchar("carpanter_name", { length: 30 }).notNull(),
   profileUrl: text("carpanter_profileUrl"),
-  area: text("carpanter_area").notNull(),
+  area: varchar("carpanter_area", { length: 20 }).notNull(),
   balance: numeric("carpanter_balance", { precision: 10, scale: 2 })
-    .notNull()
     .default("0.00"),
 });
 
@@ -99,11 +97,11 @@ export const carpanter_relation = relations(carpanter, ({ many }) => ({
 }));
 
 export const driver = pgTable("driver", {
-  id: uuid("driver_id").defaultRandom().notNull(),
-  name: text("driver_name").notNull(),
+  id: uuid("driver_id").defaultRandom().notNull().primaryKey(),
+  name: varchar("driver_name", { length: 30 }).notNull(),
   profileUrl: text("driver_profileUrl"),
-  vehicle_number: text("driver_vehicle_number"),
-  size_of_vehicle: text("driver_size_of_vehicle", {
+  vehicle_number: varchar("driver_vehicle_number", { length: 12 }),
+  size_of_vehicle: varchar("driver_size_of_vehicle", {
     enum: ["rickshaw", "tempo", "chota-hathi", "tata", "truck"],
   }).notNull(),
 });
@@ -114,15 +112,15 @@ export const driver_relation = relations(driver, ({ many }) => ({
 }));
 
 export const phone_number = pgTable("phone_number", {
-  id: uuid("phone_number_id").defaultRandom().notNull(),
+  id: uuid("phone_number_id").defaultRandom().notNull().primaryKey(),
   customer_id: uuid("customer_id").references(() => customer.id),
   architect_id: uuid("architect_id").references(() => architect.id),
   carpanter_id: uuid("carpanter_id").references(() => carpanter.id),
   driver_id: uuid("driver_id").references(() => driver.id),
-  country_code: text("phone_number_country_code"),
-  phone_number: text("phone_number").notNull(),
-  whatsappChatId: text("phone_number_whatsappChatId"),
-  isPrimary: boolean("phone_number_isPrimary").default(false).notNull(),
+  country_code: varchar("phone_number_country_code", { length: 5 }),
+  phone_number: varchar("phone_number", { length: 10 }).notNull().unique(),
+  whatsappChatId: varchar("phone_number_whatsappChatId", { length: 20 }).unique(),
+  isPrimary: boolean("phone_number_isPrimary").default(false),
 });
 
 export const phone_number_relation = relations(phone_number, ({ one }) => ({
@@ -146,11 +144,9 @@ export const phone_number_relation = relations(phone_number, ({ one }) => ({
 
 export const item = pgTable("item", {
   id: uuid("item_id").primaryKey().defaultRandom().notNull(),
-  name: text("item_name").notNull(),
-  multiplier: numeric("item_multiplier", { precision: 10, scale: 2 })
-    .notNull()
-    .default("1.00"),
-  category: text("item_category", {
+  name: varchar("item_name", { length: 256 }).notNull(),
+  multiplier: real("item_multiplier").notNull().default(1.00),
+  category: varchar("item_category", {
     enum: [
       "Adhesives",
       "Plywood",
@@ -162,17 +158,16 @@ export const item = pgTable("item", {
       "Door",
     ],
   }).notNull(),
-  quantity: numeric("item_quantity", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0.00"),
+  quantity: real("item_quantity")
+    .notNull(),
   min_quantity: numeric("item_min_quantity", {
     precision: 10,
     scale: 2,
-  }).default("0.00"),
-  min_rate: numeric("item_min_rate", { precision: 10, scale: 2 }),
-  sale_rate: numeric("item_min_rate", { precision: 10, scale: 2 }).notNull(),
-  rate_dimension: text("item_rate_dimension", {
-    enum: ["rft", "sq/ft", "piece"],
+  }).notNull(),
+  min_rate: real("item_min_rate"),
+  sale_rate: real("item_min_rate").notNull(),
+  rate_dimension: varchar("item_rate_dimension", {
+    enum: ["Rft", "sq/ft", "piece"],
   }).notNull(),
 });
 
@@ -191,17 +186,17 @@ export const order = pgTable("order", {
   architect_id: uuid("architect_id").references(() => architect.id),
   driver_id: uuid("driver_id").references(() => driver.id),
 
-  status: text("order_status", {
+  status: varchar("order_status", {
     enum: ["Pending", "Delivered"],
   })
     .notNull()
     .default("Pending"),
-  priority: text("order_priority", {
+  priority: varchar("order_priority", {
     enum: ["High", "Medium", "Low"],
   })
     .notNull()
     .default("Low"),
-  payment_status: text("order_payment_status", {
+  payment_status: varchar("order_payment_status", {
     enum: ["UnPaid", "Partial", "Paid"],
   })
     .notNull()
@@ -212,13 +207,13 @@ export const order = pgTable("order", {
     () => customer_address.id
   ),
 
-  labour_frate_cost: integer("order_labour_frate_cost").notNull(),
+  labour_frate_cost: real("order_labour_frate_cost").notNull(),
   total_order_amount: numeric("total_order_amount", {
     precision: 10,
     scale: 2,
   }).notNull(),
-  discount: numeric("order_discount", { precision: 10, scale: 2 }).notNull(),
-  amount_paid: numeric("amount_paid", { precision: 10, scale: 2 }).notNull(),
+  discount: numeric("order_discount", { precision: 10, scale: 2 }).default("0.00"),
+  amount_paid: numeric("amount_paid", { precision: 10, scale: 2 }).default("0.00"),
 
   carpanter_commision: numeric("order_carpanter_commision", {
     precision: 10,
@@ -230,7 +225,7 @@ export const order = pgTable("order", {
   }),
 
   created_at: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull().$onUpdate(() => new Date())
 });
 
 export const order_relation = relations(order, ({ one, many }) => ({
@@ -259,30 +254,33 @@ export const order_relation = relations(order, ({ one, many }) => ({
 
 export const order_item = pgTable("order_item", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
+
   order_id: uuid("order_item_order_id")
     .references(() => order.id)
     .notNull(),
   item_id: uuid("order_item_item_id")
     .references(() => item.id)
     .notNull(),
-  quantity: numeric("order_item_quantity", { precision: 10, scale: 2 }).notNull(),
-  rate: numeric("order_item_rate", { precision: 10, scale: 2 }).notNull(),
+
+  quantity: real("order_item_quantity").notNull(),
+  rate: real("order_item_rate").notNull(),
   total_value: numeric("order_item_total_value", {
     precision: 10,
     scale: 2,
   }).notNull(),
+
   carpanter_commision: numeric("order_item_carpanter_commision", {
     precision: 10,
     scale: 2,
   }),
-  carpanter_commision_type: text("order_item_carpanter_commision_type", {
+  carpanter_commision_type: varchar("order_item_carpanter_commision_type", {
     enum: ["percentage", "perPiece"],
   }),
   architect_commision: numeric("order_item_architect_commision", {
     precision: 10,
     scale: 2,
   }),
-  architect_commision_type: text("order_item_architect_commision_type", {
+  architect_commision_type: varchar("order_item_architect_commision_type", {
     enum: ["percentage", "perPiece"],
   }),
 });
@@ -301,12 +299,14 @@ export const order_item_relation = relations(order_item, ({ one }) => ({
 export const estimate = pgTable("estimate", {
   id: uuid("estimate_id").primaryKey().defaultRandom().notNull(),
   customer_id: uuid("customer_id").references(() => customer.id),
+
   total_estimate_amount: numeric("total_estimate_amount", {
     precision: 10,
     scale: 2,
   }).notNull(),
+
   created_at: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull().$onUpdate(() => new Date())
 });
 
 export const estimate_relation = relations(estimate, ({ one, many }) => ({
@@ -325,8 +325,9 @@ export const estimate_item = pgTable("estimate_item", {
   item_id: uuid("estimate_item_item_id")
     .references(() => item.id)
     .notNull(),
-  quantity: numeric("estimate_item_quantity", { precision: 10, scale: 2 }).notNull(),
-  rate: numeric("estimate_item_rate", { precision: 10, scale: 2 }).notNull(),
+  
+  quantity: real("estimate_item_quantity").notNull(),
+  rate: real("estimate_item_rate").notNull(),
   total_value: numeric("estimate_item_total_value", {
     precision: 10,
     scale: 2,
