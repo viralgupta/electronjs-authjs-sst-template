@@ -119,7 +119,7 @@ export const phone_number = pgTable("phone_number", {
   architect_id: uuid("architect_id").references(() => architect.id),
   carpanter_id: uuid("carpanter_id").references(() => carpanter.id),
   driver_id: uuid("driver_id").references(() => driver.id),
-  country_code: text("phone_number_country_code").notNull(),
+  country_code: text("phone_number_country_code"),
   phone_number: text("phone_number").notNull(),
   whatsappChatId: text("phone_number_whatsappChatId"),
   isPrimary: boolean("phone_number_isPrimary").default(false).notNull(),

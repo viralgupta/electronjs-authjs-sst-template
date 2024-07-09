@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import db from "@db/db";
-import { customer } from "@db/schema";
+import { customer, phone_number } from "@db/schema";
 import { createCustomerSchema } from "@type/api/customer";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -12,17 +12,30 @@ const createCustomer = async (req: Request, res: Response) => {
   }
 
   try {
-    // const customer2 = await db.insert(customer).values({
-    //   name,
-    //   balance,
-    // });
-    
-    return res.status(201).json({success: true, data: "customer"});
-  } catch (error) {
-    // return res.status(500).json({success: false, message: error.message});
-  }
 
+    const createdCustomer = await db.transaction(async (tx) => {
+
+      const tCustomer = await tx.insert(customer).values({
+        name: createCustomerSchemaAnswer.data.name,
+        balance: createCustomerSchemaAnswer.data.balance,
+      }).returning();
+
+      await tx.insert(phone_number).values({
+        phone_number: createCustomerSchemaAnswer.data.phone_number,
+        country_code: createCustomerSchemaAnswer.data.country_code ?? null,
+        isPrimary: true,
+        customer_id: tCustomer[0].id
+      })
+      return tCustomer;
+
+    })
+    
+    return res.status(201).json({success: true, message: "Customer created successfully", data: createdCustomer});
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Unable to create customer", error: error});
+  }
 }
+
 const addAddress = async (req: Request, res: Response) => {}
 const editCustomer = async (req: Request, res: Response) => {}
 const settleBalance = async (req: Request, res: Response) => {}
