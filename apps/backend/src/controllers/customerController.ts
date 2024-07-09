@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import db from "@db/db";
-import { customer, phone_number } from "@db/schema";
+import { address, customer, phone_number } from "@db/schema";
 import { createCustomerSchema } from "@type/api/customer";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -8,7 +8,7 @@ const createCustomer = async (req: Request, res: Response) => {
   const createCustomerSchemaAnswer = createCustomerSchema.safeParse(req.body);
 
   if (!createCustomerSchemaAnswer.success){
-    return res.status(400).json({success: false, message: createCustomerSchemaAnswer.error.flatten()})
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: createCustomerSchemaAnswer.error.flatten()})
   }
 
   try {
@@ -30,7 +30,21 @@ const createCustomer = async (req: Request, res: Response) => {
             whatsappChatId: phone_number.whatsappChatId
           };
         })
-      )      
+      )
+      await tx.insert(address).values(
+        createCustomerSchemaAnswer.data.addresses.map((address) => {
+          return {
+            customer_id: tCustomer[0].id,
+            address: address.address,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            isPrimary: address.isPrimary,
+            latitude: address.latitude,
+            longitude: address.longitude
+          }
+        })
+      )
       return tCustomer[0];
     })
     
@@ -41,7 +55,7 @@ const createCustomer = async (req: Request, res: Response) => {
 }
 
 const addAddress = async (req: Request, res: Response) => {
-  
+
 }
 const editCustomer = async (req: Request, res: Response) => {}
 const settleBalance = async (req: Request, res: Response) => {}

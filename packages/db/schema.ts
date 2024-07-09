@@ -10,6 +10,7 @@ import {
   timestamp,
   varchar,
   real,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -54,8 +55,8 @@ export const address = pgTable("address", {
   state: varchar("address_state", { length: 20 }).notNull(),
   pincode: varchar("address_pincode", { length: 8 }).notNull(),
   isPrimary: boolean("address_isPrimary").default(false),
-  latitude: numeric("address_latitude", { precision: 10, scale: 7 }),
-  longitude: numeric("address_longitude", { precision: 10, scale: 7 }),
+  latitude: doublePrecision("address_latitude"),
+  longitude: doublePrecision("address_longitude"),
 });
 
 export const address_relation = relations(
