@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, customer, phone_number } from "@db/schema";
-import { addAddressType, createCustomerType } from "@type/api/customer";
+import { addAddressType, createCustomerType, editCustomerType } from "@type/api/customer";
 import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -18,6 +18,7 @@ const createCustomer = async (req: Request, res: Response) => {
       const tCustomer = await tx.insert(customer).values({
         name: createCustomerTypeAnswer.data.name,
         balance: createCustomerTypeAnswer.data.balance,
+        profileUrl: createCustomerTypeAnswer.data.profileUrl
       }).returning();
 
       await tx.insert(phone_number).values(
@@ -57,13 +58,13 @@ const createCustomer = async (req: Request, res: Response) => {
 const addAddress = async (req: Request, res: Response) => {
   const addAddressTypeAnswer = addAddressType.safeParse(req.body);
 
-  if (!addAddressTypeAnswer.success || !req.body.customer_id){
+  if (!addAddressTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: addAddressTypeAnswer.error?.flatten()})
   }
 
   try {
-    
-    const tCustomer = await db.select({id: customer.id}).from(customer).where(eq(customer.id, req.body.customer_id));
+
+    const tCustomer = await db.select({id: customer.id}).from(customer).where(eq(customer.id, addAddressTypeAnswer.data.customer_id));
     if(tCustomer.length === 0){
       return res.status(400).json({ success: false, message: "Customer not found" });
     }
@@ -85,7 +86,38 @@ const addAddress = async (req: Request, res: Response) => {
     return res.status(500).json({success: false, message: "Unable to add address", error: error});
   }
 }
-const editCustomer = async (req: Request, res: Response) => {}
+
+const editCustomer = async (req: Request, res: Response) => {
+  const editCustomerTypeAnswer = editCustomerType.safeParse(req.body);
+
+  if (!editCustomerTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: editCustomerTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    
+    const updatedCustomer = await db.transaction(async (tx) => {
+      const tCustomer = await tx.select({id: customer.id}).from(customer).where(eq(customer.id, editCustomerTypeAnswer.data.customer_id));
+
+      if(tCustomer.length === 0){
+        throw new Error("Customer not found");
+      }
+
+      const updatedTCustomer = await tx.update(customer).set({
+        name: editCustomerTypeAnswer.data.name,
+        balance: editCustomerTypeAnswer.data.balance,
+        profileUrl: editCustomerTypeAnswer.data.profileUrl
+      }).where(eq(customer.id, tCustomer[0].id)).returning();
+
+      return updatedTCustomer[0];
+    })
+
+    return res.status(201).json({success: true, message: "Customer updated successfully", data: updatedCustomer});
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Unable to update customer", error: error});
+  }
+};
+
 const settleBalance = async (req: Request, res: Response) => {}
 const getCustomer = async (req: Request, res: Response) => {}
 const deleteCustomer = async (req: Request, res: Response) => {}
