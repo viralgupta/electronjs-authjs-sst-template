@@ -30,7 +30,8 @@ export const createCustomerType = z
   })
   .strict("Too many fields in request body");
 
-export const addAddressType =  addressType.extend({
+export const addAddressType = z.object({
+  addresses: z.array(addressType),
   customer_id: z.string()
 })
 

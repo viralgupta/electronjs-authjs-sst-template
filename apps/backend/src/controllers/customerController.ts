@@ -69,16 +69,18 @@ const addAddress = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "Customer not found" });
     }
     await db.transaction(async (tx) => {
-      await tx.insert(address).values({
-        customer_id: tCustomer[0].id,
-        address: addAddressTypeAnswer.data.address,
-        city: addAddressTypeAnswer.data.city,
-        state: addAddressTypeAnswer.data.state,
-        pincode: addAddressTypeAnswer.data.pincode,
-        isPrimary: addAddressTypeAnswer.data.isPrimary,
-        latitude: addAddressTypeAnswer.data.latitude,
-        longitude: addAddressTypeAnswer.data.longitude
-      });
+      addAddressTypeAnswer.data.addresses.map((address) => {
+        return {
+          customer_id: tCustomer[0].id,
+          address: address.address,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          isPrimary: address.isPrimary,
+          latitude: address.latitude,
+          longitude: address.longitude
+        }
+      })
     })
 
     return res.status(200).json({success: true, message: "Address added successfully"});
