@@ -61,3 +61,7 @@ export const settleBalanceType = z.object({
     .transform((val) => parseFloat(parseFloat(val).toFixed(2))),
   operation: z.enum(["add", "subtract"]),
 }).strict("Too many fields in request body");
+
+export const getCustomerType = z.object({
+  customer_id: z.string()
+}).strict("Too many fields in request params");

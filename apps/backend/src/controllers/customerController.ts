@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, customer, phone_number } from "@db/schema";
-import { addAddressType, createCustomerType, editCustomerType, settleBalanceType } from "@type/api/customer";
-import { eq, sql } from "drizzle-orm";
+import { addAddressType, createCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
 
@@ -111,7 +111,9 @@ const editCustomer = async (req: Request, res: Response) => {
       return updatedTCustomer[0];
     })
 
-    return res.status(201).json({success: true, message: "Customer updated successfully", data: updatedCustomer});
+    const  { ["total_order_value"]: _, ...updatedCustomerWithoutTotalOrderValue} = updatedCustomer;
+
+    return res.status(201).json({success: true, message: "Customer updated successfully", data: updatedCustomerWithoutTotalOrderValue});
   } catch (error) {
     return res.status(500).json({success: false, message: "Unable to update customer", error: error});
   }
@@ -148,13 +150,47 @@ const settleBalance = async (req: Request, res: Response) => {
       return updatedTCustomer[0];
     })
 
-    return res.status(201).json({success: true, message: "Balance updated successfully", data: updatedCustomer});
+    const  { ["total_order_value"]: _, ...updatedCustomerWithoutTotalOrderValue} = updatedCustomer;
+
+    return res.status(201).json({success: true, message: "Balance updated successfully", data: updatedCustomerWithoutTotalOrderValue});
   } catch (error) {
     return res.status(500).json({success: false, message: "Unable to update balance", error: error});
   }
 }
 
-const getCustomer = async (req: Request, res: Response) => {}
+const getCustomer = async (req: Request, res: Response) => {
+
+  const getCustomerTypeAnswer = getCustomerType.safeParse(req.params);
+
+  if (!getCustomerTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: getCustomerTypeAnswer.error?.flatten()})
+  }
+
+  try {
+
+    const getCustomer = await db.query.customer.findFirst({
+      where: (customer, { eq }) => eq(customer.id, getCustomerTypeAnswer.data.customer_id),
+      with: {
+        addresses: true,
+        phone_numbers: true,
+        orders: true,
+        estimates: true
+      },
+      columns: {
+        total_order_value: false
+      }
+    })
+
+    if(!getCustomer){
+      return res.status(404).json({success: false, message: "Customer not found"});
+    }
+
+    return res.status(200).json({success: true, data: getCustomer});
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Unable to get customer", error: error});
+  }
+}
+
 const deleteCustomer = async (req: Request, res: Response) => {}
 const getAllCustomers = async (req: Request, res: Response) => {}
 

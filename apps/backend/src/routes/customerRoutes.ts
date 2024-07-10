@@ -7,7 +7,7 @@ customerRouter.route('/createCustomer').post(createCustomer)
 customerRouter.route('/addAddress').post(addAddress)
 customerRouter.route('/editCustomer').put(editCustomer)
 customerRouter.route('/settleBalance').put(settleBalance)
-customerRouter.route('/getCustomer').get(getCustomer)
+customerRouter.route('/getCustomer/:customer_id').get(getCustomer)
 customerRouter.route('/deleteCustomer').delete(deleteCustomer)
 customerRouter.route('/getAllCustomers').get(getAllCustomers)
 
