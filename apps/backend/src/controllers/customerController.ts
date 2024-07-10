@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, customer, phone_number } from "@db/schema";
-import { addAddressType, createCustomerType, editCustomerType } from "@type/api/customer";
-import { eq } from "drizzle-orm";
+import { addAddressType, createCustomerType, editCustomerType, settleBalanceType } from "@type/api/customer";
+import { eq, sql } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
 
@@ -105,7 +105,6 @@ const editCustomer = async (req: Request, res: Response) => {
 
       const updatedTCustomer = await tx.update(customer).set({
         name: editCustomerTypeAnswer.data.name,
-        balance: editCustomerTypeAnswer.data.balance,
         profileUrl: editCustomerTypeAnswer.data.profileUrl
       }).where(eq(customer.id, tCustomer[0].id)).returning();
 
@@ -118,7 +117,35 @@ const editCustomer = async (req: Request, res: Response) => {
   }
 };
 
-const settleBalance = async (req: Request, res: Response) => {}
+const settleBalance = async (req: Request, res: Response) => {
+  const settleBalanceTypeAnswer = settleBalanceType.safeParse(req.body);
+
+  if (!settleBalanceTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: settleBalanceTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    
+    const updatedCustomer = await db.transaction(async (tx) => {
+      const tCustomer = await tx.select({id: customer.id, balance: customer.balance}).from(customer).where(eq(customer.id, settleBalanceTypeAnswer.data.customer_id));
+
+      if(tCustomer.length === 0){
+        throw new Error("Customer not found");
+      }
+
+      const updatedTCustomer = await tx.update(customer).set({
+        balance: sql`${tCustomer[0].balance} ${settleBalanceTypeAnswer.data.operation === "add" ? "+" : "-"} ${settleBalanceTypeAnswer.data.amount}`,
+      }).where(eq(customer.id, tCustomer[0].id)).returning();
+
+      return updatedTCustomer[0];
+    })
+
+    return res.status(201).json({success: true, message: "Balance updated successfully", data: updatedCustomer});
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Unable to update balance", error: error});
+  }
+}
+
 const getCustomer = async (req: Request, res: Response) => {}
 const deleteCustomer = async (req: Request, res: Response) => {}
 const getAllCustomers = async (req: Request, res: Response) => {}

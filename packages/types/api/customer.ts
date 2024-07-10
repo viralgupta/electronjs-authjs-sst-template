@@ -36,14 +36,25 @@ export const addAddressType =  addressType.extend({
 export const editCustomerType = createCustomerType.omit({
   phone_numbers: true,
   addresses: true,
+  balance: true
 }).extend({
   customer_id: z.string()
 }).partial({
   name: true,
-  balance: true,
   profileUrl: true
 }).refine((vals) => {
-  if (!vals.balance && !vals.name && !vals.profileUrl){
+  if (!vals.name && !vals.profileUrl){
     return false;
   }
 }, "At least one field is required to update customer")
+
+export const settleBalanceType = z.object({
+  customer_id: z.string(),
+  amount: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0.00, {
+      message: "The amount must be greater than or equal to 0.00",
+    })
+    .transform((val) => parseFloat(val)),
+  operation: z.enum(["add", "subtract"]),
+}).strict("Too many fields in request body");
