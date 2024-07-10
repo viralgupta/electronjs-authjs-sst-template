@@ -43,8 +43,10 @@ export const editCustomerType = createCustomerType.omit({
   name: true,
   profileUrl: true
 }).refine((vals) => {
-  if (!vals.name && !vals.profileUrl){
+  if (vals.name == undefined && vals.profileUrl == undefined){
     return false;
+  } else {
+    return true;
   }
 }, "At least one field is required to update customer")
 
