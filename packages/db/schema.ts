@@ -48,7 +48,7 @@ export const customer_relation = relations(customer, ({ many }) => ({
 export const address = pgTable("address", {
   id: uuid("address_id").defaultRandom().notNull().primaryKey(),
   customer_id: uuid("customer_id")
-    .references(() => customer.id)
+    .references(() => customer.id, { onDelete: "cascade"})
     .notNull(),
   address: varchar("address", { length: 256 }).notNull(),
   city: varchar("address_city", { length: 30 }).notNull(),
@@ -114,10 +114,10 @@ export const driver_relation = relations(driver, ({ many }) => ({
 
 export const phone_number = pgTable("phone_number", {
   id: uuid("phone_number_id").defaultRandom().notNull().primaryKey(),
-  customer_id: uuid("customer_id").references(() => customer.id),
-  architect_id: uuid("architect_id").references(() => architect.id),
-  carpanter_id: uuid("carpanter_id").references(() => carpanter.id),
-  driver_id: uuid("driver_id").references(() => driver.id),
+  customer_id: uuid("customer_id").references(() => customer.id, { onDelete: "cascade" }),
+  architect_id: uuid("architect_id").references(() => architect.id, { onDelete: "cascade" }),
+  carpanter_id: uuid("carpanter_id").references(() => carpanter.id, { onDelete: "cascade" }),
+  driver_id: uuid("driver_id").references(() => driver.id, { onDelete: "cascade" }),
   country_code: varchar("phone_number_country_code", { length: 5 }),
   phone_number: varchar("phone_number", { length: 10 }).notNull().unique(),
   whatsappChatId: varchar("phone_number_whatsappChatId", { length: 20 }).unique(),
@@ -299,7 +299,7 @@ export const order_item_relation = relations(order_item, ({ one }) => ({
 
 export const estimate = pgTable("estimate", {
   id: uuid("estimate_id").primaryKey().defaultRandom().notNull(),
-  customer_id: uuid("customer_id").references(() => customer.id),
+  customer_id: uuid("customer_id").references(() => customer.id, { onDelete: "cascade" }).notNull(),
 
   total_estimate_amount: numeric("total_estimate_amount", {
     precision: 10,
