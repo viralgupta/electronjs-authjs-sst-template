@@ -18,9 +18,10 @@ export const createCustomerType = z
     name: z.string().min(2, "Name too short"),
     balance: z
       .string()
-      .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0.0, {
+      .refine((val) => !isNaN(parseFloat(val)) && parseFloat(parseFloat(val).toFixed(2)) >= 0.00, {
         message: "The number must be greater than or equal to 0.00",
-      }),
+      })
+      .transform((val) => parseFloat(val).toFixed(2)),
     profileUrl: z.string().optional(),
     phone_numbers: z
       .array(phone_numberType)
@@ -54,9 +55,9 @@ export const settleBalanceType = z.object({
   customer_id: z.string(),
   amount: z
     .string()
-    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0.00, {
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(parseFloat(val).toFixed(2)) >= 0.00, {
       message: "The amount must be greater than or equal to 0.00",
     })
-    .transform((val) => parseFloat(val)),
+    .transform((val) => parseFloat(parseFloat(val).toFixed(2))),
   operation: z.enum(["add", "subtract"]),
 }).strict("Too many fields in request body");

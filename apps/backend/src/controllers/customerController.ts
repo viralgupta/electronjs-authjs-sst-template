@@ -133,8 +133,16 @@ const settleBalance = async (req: Request, res: Response) => {
         throw new Error("Customer not found");
       }
 
+      if(!tCustomer[0].balance){
+        tCustomer[0].balance = "0.00";
+      }
+
+      const newBalance = settleBalanceTypeAnswer.data.operation == "add" 
+        ? parseFloat(parseFloat(tCustomer[0].balance).toFixed(2)) + settleBalanceTypeAnswer.data.amount 
+        : parseFloat(parseFloat(tCustomer[0].balance).toFixed(2)) - settleBalanceTypeAnswer.data.amount;
+
       const updatedTCustomer = await tx.update(customer).set({
-        balance: sql`${tCustomer[0].balance} ${settleBalanceTypeAnswer.data.operation === "add" ? "+" : "-"} ${settleBalanceTypeAnswer.data.amount}`,
+        balance: newBalance.toFixed(2)
       }).where(eq(customer.id, tCustomer[0].id)).returning();
 
       return updatedTCustomer[0];
