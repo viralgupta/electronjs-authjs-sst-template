@@ -173,12 +173,26 @@ const getCustomer = async (req: Request, res: Response) => {
       with: {
         addresses: true,
         phone_numbers: true,
-        // orders: true,
-        // estimates: {
-        //   orderBy: {
-
-        //   }
-        // }
+        orders: {
+          columns: {
+            id: true,
+            priority: true,
+            status: true,
+            payment_status: true,
+            total_order_amount: true,
+            amount_paid: true,
+            created_at: true,
+          },
+          orderBy: (order, { desc }) => [desc(order.created_at)],
+        },
+        estimates: {
+          columns: {
+            id: true,
+            total_estimate_amount: true,
+            created_at: true,
+          },
+          orderBy: (estimate, { desc }) => [desc(estimate.created_at)],
+        }
       },
       columns: {
         total_order_value: false
