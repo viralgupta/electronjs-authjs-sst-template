@@ -1,17 +1,5 @@
 import { z } from "zod";
-import { phone_numberType } from "./miscellaneous";
-
-export const addressType = z
-  .object({
-    address: z.string().max(256, "Address too long"),
-    city: z.string().max(30, "City too long"),
-    state: z.string().max(20, "State too long"),
-    pincode: z.string().max(8, "Pincode too long"),
-    isPrimary: z.boolean().default(false),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
-  })
-  .strict("Too many fields in request body");
+import { phone_numberType, addressType } from "./miscellaneous";
 
 export const createCustomerType = z
   .object({

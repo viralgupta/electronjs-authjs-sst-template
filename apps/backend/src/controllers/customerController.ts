@@ -68,7 +68,7 @@ const addAddress = async (req: Request, res: Response) => {
     if(tCustomer.length === 0){
       return res.status(400).json({ success: false, message: "Customer not found" });
     }
-    await db.transaction(async (tx) => {
+    await db.insert(address).values(
       addAddressTypeAnswer.data.addresses.map((address) => {
         return {
           customer_id: tCustomer[0].id,
@@ -81,7 +81,7 @@ const addAddress = async (req: Request, res: Response) => {
           longitude: address.longitude
         }
       })
-    })
+    );
 
     return res.status(200).json({success: true, message: "Address added successfully"});
   } catch (error: any) {
@@ -254,12 +254,14 @@ const getAllCustomers = async (_req: Request, res: Response) => {
             phone_number: true,
             country_code: true,
           },
+          where: (phone_number, { eq }) => eq(phone_number.isPrimary, true),
         },
+        // get address house number and area // add to schema
       },
       orderBy: (customer, { desc }) => [desc(customer.balance)],
     });
 
-    return res.status(200).json({success: true, data: customers});
+    return res.status(200).json({success: true, message: "Customers found", data: customers});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to get customers", error: error.message ? error.message : error});
   }
