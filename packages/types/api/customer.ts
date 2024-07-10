@@ -65,3 +65,5 @@ export const settleBalanceType = z.object({
 export const getCustomerType = z.object({
   customer_id: z.string()
 }).strict("Too many fields in request params");
+
+export const deleteCustomerType = getCustomerType;

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, customer, phone_number } from "@db/schema";
-import { addAddressType, createCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -49,9 +49,9 @@ const createCustomer = async (req: Request, res: Response) => {
       return tCustomer[0];
     })
     
-    return res.status(201).json({success: true, message: "Customer created successfully", data: createdCustomer});
-  } catch (error) {
-    return res.status(500).json({success: false, message: "Unable to create customer", error: error});
+    return res.status(200).json({success: true, message: "Customer created successfully", data: createdCustomer});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to create customer", error: error.message ? error.message : error});
   }
 }
 
@@ -81,9 +81,9 @@ const addAddress = async (req: Request, res: Response) => {
       });
     })
 
-    return res.status(201).json({success: true, message: "Address added successfully"});
-  } catch (error) {
-    return res.status(500).json({success: false, message: "Unable to add address", error: error});
+    return res.status(200).json({success: true, message: "Address added successfully"});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to add address", error: error.message ? error.message : error});
   }
 }
 
@@ -113,9 +113,9 @@ const editCustomer = async (req: Request, res: Response) => {
 
     const  { ["total_order_value"]: _, ...updatedCustomerWithoutTotalOrderValue} = updatedCustomer;
 
-    return res.status(201).json({success: true, message: "Customer updated successfully", data: updatedCustomerWithoutTotalOrderValue});
-  } catch (error) {
-    return res.status(500).json({success: false, message: "Unable to update customer", error: error});
+    return res.status(200).json({success: true, message: "Customer updated successfully", data: updatedCustomerWithoutTotalOrderValue});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to update customer", error: error.message ? error.message : error});
   }
 };
 
@@ -152,9 +152,9 @@ const settleBalance = async (req: Request, res: Response) => {
 
     const  { ["total_order_value"]: _, ...updatedCustomerWithoutTotalOrderValue} = updatedCustomer;
 
-    return res.status(201).json({success: true, message: "Balance updated successfully", data: updatedCustomerWithoutTotalOrderValue});
-  } catch (error) {
-    return res.status(500).json({success: false, message: "Unable to update balance", error: error});
+    return res.status(200).json({success: true, message: "Balance updated successfully", data: updatedCustomerWithoutTotalOrderValue});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to update balance", error: error.message ? error.message : error});
   }
 }
 
@@ -173,8 +173,12 @@ const getCustomer = async (req: Request, res: Response) => {
       with: {
         addresses: true,
         phone_numbers: true,
-        orders: true,
-        estimates: true
+        // orders: true,
+        // estimates: {
+        //   orderBy: {
+
+        //   }
+        // }
       },
       columns: {
         total_order_value: false
@@ -182,17 +186,68 @@ const getCustomer = async (req: Request, res: Response) => {
     })
 
     if(!getCustomer){
-      return res.status(404).json({success: false, message: "Customer not found"});
+      return res.status(400).json({success: false, message: "Customer not found"});
     }
 
     return res.status(200).json({success: true, data: getCustomer});
-  } catch (error) {
-    return res.status(500).json({success: false, message: "Unable to get customer", error: error});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to get customer", error: error.message ? error.message : error});
   }
 }
 
-const deleteCustomer = async (req: Request, res: Response) => {}
-const getAllCustomers = async (req: Request, res: Response) => {}
+const deleteCustomer = async (req: Request, res: Response) => {
+  const deleteCustomerTypeAnswer = deleteCustomerType.safeParse(req.body);
+
+  if (!deleteCustomerTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: deleteCustomerTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+
+      const tCustomer = await tx.select({id: customer.id, balance: customer.balance}).from(customer).where(eq(customer.id, deleteCustomerTypeAnswer.data.customer_id));
+      
+      if(tCustomer.length === 0){
+        throw new Error("Customer not found");
+      }
+      
+      if(tCustomer[0].balance && parseFloat(parseFloat(tCustomer[0].balance).toFixed(2)) > 0.00){
+        throw new Error("Customer has balance pending, Settle Balance first!")
+      }
+      
+      await tx.delete(customer).where(eq(customer.id, tCustomer[0].id));
+    });
+
+    return res.status(200).json({success: true, message: "Customer deleted successfully"});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to delete customer", error: error.message ? error.message : error});
+  }
+}
+
+const getAllCustomers = async (_req: Request, res: Response) => {
+
+  try {
+    const customers = await db.query.customer.findMany({
+      columns: {
+        name: true,
+        balance: true,
+      },
+      with: {
+        phone_numbers: {
+          columns: {
+            phone_number: true,
+            country_code: true,
+          },
+        },
+      },
+      orderBy: (customer, { desc }) => [desc(customer.balance)],
+    });
+
+    return res.status(200).json({success: true, data: customers});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to get customers", error: error.message ? error.message : error});
+  }
+}
 
 export {
   createCustomer,
