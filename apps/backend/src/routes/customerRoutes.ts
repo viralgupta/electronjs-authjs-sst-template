@@ -5,7 +5,7 @@ const customerRouter = express.Router()
 
 customerRouter.route('/createCustomer').post(createCustomer)
 customerRouter.route('/addAddressArea').post(addAddressArea)
-customerRouter.route('/getAllAddressAreas').post(getAllAddressAreas)
+customerRouter.route('/getAllAddressAreas').get(getAllAddressAreas)
 customerRouter.route('/addAddress').post(addAddress)
 customerRouter.route('/editCustomer').put(editCustomer)
 customerRouter.route('/settleBalance').put(settleBalance)
