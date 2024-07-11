@@ -80,12 +80,29 @@ const addAddressArea = async (req: Request, res: Response) => {
     const newAreas = await db.insert(address_area).values({
       area: addAddressAreaTypeAnswer.data.area
     }).returning({
+      id: address_area.id,
       areas: address_area.area
     })
 
     return res.status(200).json({success: true, message: "Address Area added successfully", data: newAreas});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to add Address Area", error: error.message ? error.message : error});
+  }
+}
+
+const getAllAddressAreas = async (_req: Request, res: Response) => {
+
+  try {
+    const areas = await db.query.address_area.findMany({
+      columns: {
+        id: true,
+        area: true
+      }
+    });
+
+    return res.status(200).json({success: true, message: "Areas Found", data: areas});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to get Address Areas", error: error.message ? error.message : error});
   }
 }
 
@@ -366,6 +383,7 @@ export {
   createCustomer,
   addAddress,
   addAddressArea,
+  getAllAddressAreas,
   editCustomer,
   settleBalance,
   getCustomer,
