@@ -11,12 +11,17 @@ export const phone_numberType = z.object({
   isPrimary: z.boolean().optional().default(false),
 })
 
+export const addressAreaType = z.object({
+  area: z.string().max(50, "Area too long")
+})
+
 export const addressType = z
   .object({
+    house_number: z.string().max(15, "House number too long"),
+    address_area_id: z.string(),
     address: z.string().max(256, "Address too long"),
     city: z.string().max(30, "City too long"),
     state: z.string().max(20, "State too long"),
-    pincode: z.string().max(8, "Pincode too long"),
     isPrimary: z.boolean().default(false),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
