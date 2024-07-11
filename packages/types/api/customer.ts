@@ -70,6 +70,13 @@ export const getCustomerType = z
     }
   });
 
+export const getCustomersByAreaType = z
+  .object({
+    house_number: z.string(),
+    address_area_id: z.string(),
+  })
+  .strict("Too many fields in request body");
+
 export const deleteCustomerType = z
   .object({
     customer_id: z.string(),

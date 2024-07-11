@@ -135,7 +135,6 @@ const getAllDrivers = async (req: Request, res: Response) => {
           },
           where: (phone_number, { eq }) => eq(phone_number.isPrimary, true),
         },
-        // get no of active orders // add to schema
       },
     });
 

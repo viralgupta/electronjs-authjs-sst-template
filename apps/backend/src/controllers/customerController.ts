@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, address_area, customer, phone_number } from "@db/schema";
-import { addAddressAreaType, addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { addAddressAreaType, addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -294,6 +294,47 @@ const getCustomer = async (req: Request, res: Response) => {
   }
 }
 
+const getCustomersByArea = async (req: Request, res: Response) => {
+
+  const getCustomersByAreaTypeAnswer = getCustomersByAreaType.safeParse(req.query);
+
+  if (!getCustomersByAreaTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: getCustomersByAreaTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    const customers = await db.query.address.findMany({
+      where: (address, { eq, and }) =>
+        and(
+          eq(
+            address.address_area_id,
+            getCustomersByAreaTypeAnswer.data.address_area_id
+          ),
+          eq(
+            address.house_number,
+            getCustomersByAreaTypeAnswer.data.house_number
+          )
+        ),
+      columns: {
+        address: true,
+      },
+      with: {
+        customer: {
+          columns: {
+            id: true,
+            name: true,
+            balance: true,
+          }
+        }
+      }
+    });
+
+    return res.status(200).json({success: true, message: "Customers found", data: customers});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to get customers", error: error.message ? error.message : error});
+  }
+}
+
 const deleteCustomer = async (req: Request, res: Response) => {
   const deleteCustomerTypeAnswer = deleteCustomerType.safeParse(req.body);
 
@@ -387,6 +428,7 @@ export {
   editCustomer,
   settleBalance,
   getCustomer,
+  getCustomersByArea,
   deleteCustomer,
   getAllCustomers,
 }
