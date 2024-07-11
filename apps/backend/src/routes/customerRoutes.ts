@@ -1,9 +1,10 @@
 import express from "express"
-import { createCustomer, addAddress, editCustomer, settleBalance, getCustomer, deleteCustomer, getAllCustomers } from "../controllers/customerController"
+import { createCustomer, addAddress, addAddressArea, editCustomer, settleBalance, getCustomer, deleteCustomer, getAllCustomers } from "../controllers/customerController"
 
 const customerRouter = express.Router()
 
 customerRouter.route('/createCustomer').post(createCustomer)
+customerRouter.route('/addAddressArea').post(addAddressArea)
 customerRouter.route('/addAddress').post(addAddress)
 customerRouter.route('/editCustomer').put(editCustomer)
 customerRouter.route('/settleBalance').put(settleBalance)

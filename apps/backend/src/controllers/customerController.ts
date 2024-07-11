@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
-import { address, customer, order, phone_number } from "@db/schema";
-import { addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { address, address_area, customer, phone_number } from "@db/schema";
+import { addAddressAreaType, addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -53,6 +53,39 @@ const createCustomer = async (req: Request, res: Response) => {
     return res.status(200).json({success: true, message: "Customer created successfully", data: createdCustomer});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to create customer", error: error.message ? error.message : error});
+  }
+}
+
+const addAddressArea = async (req: Request, res: Response) => {
+  const addAddressAreaTypeAnswer = addAddressAreaType.safeParse(req.body);
+
+  if (!addAddressAreaTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: addAddressAreaTypeAnswer.error?.flatten()})
+  }
+
+  try {
+
+    const allAreas = await db.query.address_area.findMany({
+      columns: {
+        area: true
+      }
+    });
+
+    const areaExists = allAreas.find((area) => (area.area).toLowerCase() === (addAddressAreaTypeAnswer.data.area).toLowerCase());
+
+    if(areaExists){
+      return res.status(400).json({success: false, message: "Area already exists"});
+    }
+
+    const newAreas = await db.insert(address_area).values({
+      area: addAddressAreaTypeAnswer.data.area
+    }).returning({
+      areas: address_area.area
+    })
+
+    return res.status(200).json({success: true, message: "Address Area added successfully", data: newAreas});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to add Address Area", error: error.message ? error.message : error});
   }
 }
 
@@ -332,6 +365,7 @@ const getAllCustomers = async (_req: Request, res: Response) => {
 export {
   createCustomer,
   addAddress,
+  addAddressArea,
   editCustomer,
   settleBalance,
   getCustomer,
