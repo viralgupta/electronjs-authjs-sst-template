@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import db from "@db/db";
-import { address, customer, phone_number } from "@db/schema";
+import { address, customer, order, phone_number } from "@db/schema";
 import { addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq } from "drizzle-orm";
 
@@ -36,10 +36,11 @@ const createCustomer = async (req: Request, res: Response) => {
         createCustomerTypeAnswer.data.addresses.map((address) => {
           return {
             customer_id: tCustomer[0].id,
+            house_number: address.house_number,
+            address_area_id: address.address_area_id,
             address: address.address,
             city: address.city,
             state: address.state,
-            pincode: address.pincode,
             isPrimary: address.isPrimary,
             latitude: address.latitude,
             longitude: address.longitude
@@ -72,10 +73,11 @@ const addAddress = async (req: Request, res: Response) => {
       addAddressTypeAnswer.data.addresses.map((address) => {
         return {
           customer_id: tCustomer[0].id,
+          house_number: address.house_number,
+          address_area_id: address.address_area_id,
           address: address.address,
           city: address.city,
           state: address.state,
-          pincode: address.pincode,
           isPrimary: address.isPrimary,
           latitude: address.latitude,
           longitude: address.longitude
@@ -152,6 +154,7 @@ const settleBalance = async (req: Request, res: Response) => {
       return updatedTCustomer[0];
     })
 
+    // remove total_order_value from response
     const  { ["total_order_value"]: _, ...updatedCustomerWithoutTotalOrderValue} = updatedCustomer;
 
     return res.status(200).json({success: true, message: "Balance updated successfully", data: updatedCustomerWithoutTotalOrderValue});
@@ -162,7 +165,7 @@ const settleBalance = async (req: Request, res: Response) => {
 
 const getCustomer = async (req: Request, res: Response) => {
 
-  const getCustomerTypeAnswer = getCustomerType.safeParse(req.params);
+  const getCustomerTypeAnswer = getCustomerType.safeParse(req.query);
 
   if (!getCustomerTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: getCustomerTypeAnswer.error?.flatten()})
@@ -170,10 +173,40 @@ const getCustomer = async (req: Request, res: Response) => {
 
   try {
 
+    let customer_id = getCustomerTypeAnswer.data.customer_id;
+    let phone_no = getCustomerTypeAnswer.data.phone_number;
+
+    if(phone_no){
+      let phone_number_customer = await db.query.phone_number.findFirst({
+        where: (phone_number, { eq }) => eq(phone_number.phone_number, phone_no),
+        columns: {
+          customer_id: true
+        }
+      })
+      if(!phone_number_customer?.customer_id) return res.status(400).json({success: false, message: "Customer not found with this phone number"})
+      customer_id = phone_number_customer.customer_id;
+    }
+    
+    if(!customer_id) return res.status(400).json({success: false, message: "Customer ID or Phone Number is required"});
+
     const getCustomer = await db.query.customer.findFirst({
-      where: (customer, { eq }) => eq(customer.id, getCustomerTypeAnswer.data.customer_id),
+      where: (customer, { eq }) => eq(customer.id, customer_id),
       with: {
-        addresses: true,
+        addresses: {
+          with: {
+            address_area: {
+              columns: {
+                area: true
+              }
+            }
+          },
+          columns: {
+            address: true,
+            house_number: true,
+            isPrimary: true,
+            id: true
+          }
+        },
         phone_numbers: true,
         orders: {
           columns: {
@@ -221,17 +254,39 @@ const deleteCustomer = async (req: Request, res: Response) => {
   try {
     await db.transaction(async (tx) => {
 
-      const tCustomer = await tx.select({id: customer.id, balance: customer.balance}).from(customer).where(eq(customer.id, deleteCustomerTypeAnswer.data.customer_id));
+      const tCustomer = await tx.query.customer.findFirst({
+        where: (customer, { eq }) => eq(customer.id, deleteCustomerTypeAnswer.data.customer_id),
+        with: {
+          orders: {
+            where: (order, { or, isNotNull }) => or(
+              isNotNull(order.architect_id),
+              isNotNull(order.carpanter_id)
+            ),
+            limit: 1,
+            columns: {
+              id: true
+            }
+          }
+        },
+        columns: {
+          id: true,
+          balance: true
+        }
+      })
       
-      if(tCustomer.length === 0){
+      if(!tCustomer){
         throw new Error("Customer not found");
       }
       
-      if(tCustomer[0].balance && parseFloat(parseFloat(tCustomer[0].balance).toFixed(2)) > 0.00){
+      if(tCustomer.balance && parseFloat(parseFloat(tCustomer.balance).toFixed(2)) > 0.00){
         throw new Error("Customer has balance pending, Settle Balance first!")
       }
+
+      if(tCustomer.orders.length > 0){
+        throw new Error("Customer has orders which are linked to Architect or Carpanters, cannot delete Customer!")
+      }
       
-      await tx.delete(customer).where(eq(customer.id, tCustomer[0].id));
+      await tx.delete(customer).where(eq(customer.id, tCustomer.id));
     });
 
     return res.status(200).json({success: true, message: "Customer deleted successfully"});
@@ -249,14 +304,20 @@ const getAllCustomers = async (_req: Request, res: Response) => {
         balance: true,
       },
       with: {
-        phone_numbers: {
-          columns: {
-            phone_number: true,
-            country_code: true,
+        addresses: {
+          with: {
+            address_area: {
+              columns: {
+                area: true
+              }
+            }
           },
-          where: (phone_number, { eq }) => eq(phone_number.isPrimary, true),
+          columns: {
+            house_number: true,
+          },
+          where: (address, { eq }) => eq(address.isPrimary, true),
+          limit: 1
         },
-        // get address house number and area // add to schema
       },
       orderBy: (customer, { desc }) => [desc(customer.balance)],
     });
@@ -274,5 +335,5 @@ export {
   settleBalance,
   getCustomer,
   deleteCustomer,
-  getAllCustomers  
+  getAllCustomers,
 }
