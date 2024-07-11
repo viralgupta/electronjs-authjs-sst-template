@@ -45,15 +45,27 @@ export const customer_relation = relations(customer, ({ many }) => ({
   estimates: many(estimate),
 }));
 
+export const address_area = pgTable("address_area", {
+  id: uuid("address_area_id").defaultRandom().notNull().primaryKey(),
+  area: varchar("address_area_area", { length: 50 }).notNull(),
+})
+
+export const address_area_relation = relations(address_area, ({ many }) => ({
+  addresses: many(address),
+}));
+
 export const address = pgTable("address", {
   id: uuid("address_id").defaultRandom().notNull().primaryKey(),
   customer_id: uuid("customer_id")
-    .references(() => customer.id, { onDelete: "cascade"})
+    .references(() => customer.id, { onDelete: "cascade" })
+    .notNull(),
+  house_number: varchar("address_house_number", { length: 15 }).notNull(),
+  address_area_id: uuid("address_area_id")
+    .references(() => address_area.id)
     .notNull(),
   address: varchar("address", { length: 256 }).notNull(),
   city: varchar("address_city", { length: 30 }).notNull(),
   state: varchar("address_state", { length: 20 }).notNull(),
-  pincode: varchar("address_pincode", { length: 8 }).notNull(),
   isPrimary: boolean("address_isPrimary").default(false),
   latitude: doublePrecision("address_latitude"),
   longitude: doublePrecision("address_longitude"),
@@ -65,6 +77,10 @@ export const address_relation = relations(
     customer: one(customer, {
       fields: [address.customer_id],
       references: [customer.id],
+    }),
+    addressArea: one(address_area, {
+      fields: [address.address_area_id],
+      references: [address_area.id],
     }),
   })
 );
@@ -105,6 +121,7 @@ export const driver = pgTable("driver", {
   size_of_vehicle: varchar("driver_size_of_vehicle", {
     enum: ["rickshaw", "tempo", "chota-hathi", "tata", "truck"],
   }).notNull(),
+  activeOrders: integer("driver_activeOrders").default(0),
 });
 
 export const driver_relation = relations(driver, ({ many }) => ({
