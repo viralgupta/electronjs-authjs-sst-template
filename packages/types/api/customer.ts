@@ -51,8 +51,23 @@ export const settleBalanceType = z.object({
   operation: z.enum(["add", "subtract"]),
 }).strict("Too many fields in request body");
 
-export const getCustomerType = z.object({
-  customer_id: z.string()
-}).strict("Too many fields in request params");
+export const getCustomerType = z
+  .object({
+    customer_id: z.string().optional(),
+    phone_number: z.string().optional(),
+  })
+  .superRefine((vals, ctx) => {
+    const { customer_id, phone_number } = vals;
+    if ((customer_id && phone_number) || (!customer_id && !phone_number)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Exactly one of customer_id or phone_number must be provided",
+      });
+    }
+  });
 
-export const deleteCustomerType = getCustomerType;
+export const deleteCustomerType = z
+  .object({
+    customer_id: z.string(),
+  })
+  .strict("Too many fields in request body");

@@ -300,6 +300,7 @@ const getAllCustomers = async (_req: Request, res: Response) => {
   try {
     const customers = await db.query.customer.findMany({
       columns: {
+        id: true,
         name: true,
         balance: true,
       },
