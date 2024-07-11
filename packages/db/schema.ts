@@ -78,7 +78,7 @@ export const address_relation = relations(
       fields: [address.customer_id],
       references: [customer.id],
     }),
-    addressArea: one(address_area, {
+    address_area: one(address_area, {
       fields: [address.address_area_id],
       references: [address_area.id],
     }),
