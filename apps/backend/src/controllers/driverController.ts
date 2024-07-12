@@ -24,7 +24,7 @@ const createDriver = async (req: Request, res: Response) => {
       await tx.insert(phone_number).values(
         createDriverTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
-            customer_id: tDriver[0].id,
+            driver_id: tDriver[0].id,
             phone_number: phone_number.phone_number,
             country_code: phone_number.country_code,
             isPrimary: phone_number.isPrimary,
@@ -38,6 +38,7 @@ const createDriver = async (req: Request, res: Response) => {
     
     return res.status(200).json({success: true, message: "Driver created successfully", data: createdDriver});
   } catch (error: any) {
+    console.log(error)
     return res.status(400).json({success: false, message: "Unable to create driver", error: error.message ? error.message : error});
   }
 }
@@ -72,14 +73,14 @@ const editDriver = async (req: Request, res: Response) => {
 
 const getDriver = async (req: Request, res: Response) => {
   
-  const getDriverTypeAnswer = getDriverType.safeParse(req.params);
+  const getDriverTypeAnswer = getDriverType.safeParse(req.query);
 
   if (!getDriverTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: getDriverTypeAnswer.error?.flatten()})
   }
 
   try {
-    const foundDriver = db.query.driver.findFirst({
+    const foundDriver = await db.query.driver.findFirst({
       where: (driver, { eq }) => eq(driver.id, getDriverTypeAnswer.data.driver_id),
       with: {
         phone_numbers: true,
@@ -108,6 +109,7 @@ const getDriver = async (req: Request, res: Response) => {
     return res.status(400).json({success: false, message: "Unable to get driver", error: error.message ? error.message : error});
   }
 }
+
 const deleteDriver = async (req: Request, res: Response) => {
     const deleteDriverTypeAnswer = deleteDriverType.safeParse(req.params);
   
@@ -124,10 +126,10 @@ const deleteDriver = async (req: Request, res: Response) => {
     }
 }
 
-const getAllDrivers = async (req: Request, res: Response) => {
+const getAllDrivers = async (_req: Request, res: Response) => {
   try {
 
-    const allDrivers = db.query.driver.findMany({
+    const allDrivers = await db.query.driver.findMany({
       with: {
         phone_numbers: {
           columns: {
