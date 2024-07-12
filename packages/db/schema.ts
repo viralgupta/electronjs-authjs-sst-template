@@ -188,8 +188,8 @@ export const item = pgTable("item", {
 });
 
 export const item_relation = relations(item, ({ many }) => ({
-  orders: many(order_item),
-  estimates: many(estimate_item),
+  order_items: many(order_item),
+  estimate_items: many(estimate_item),
 }));
 
 export const order = pgTable("order", {
