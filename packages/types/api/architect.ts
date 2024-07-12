@@ -11,17 +11,15 @@ export const createArchitectType = z
   })
   .strict("Too many fields in request body");
 
-export const editArchitectType = createArchitectType
-  .omit({
-    phone_numbers: true,
-    balance: true,
-  })
-  .extend({
-    architect_id: z.string(),
+export const editArchitectType = z.object({
+  architect_id: z.string(),
+    name: z.string().optional(),
+    profileUrl: z.string().optional(),
+    area: z.string().optional(),
   })
   .strict("Too many fields in request body");
 
-export const settleArchitectBalanceType = z
+export const settleBalanceType = z
   .object({
     architect_id: z.string(),
     amount: z

@@ -1,6 +1,6 @@
 import db from '@db/db';
 import { architect, phone_number } from '@db/schema';
-import { createArchitectType, deleteArchitectType, editArchitectType, getArchitectType, settleArchitectBalanceType } from '@type/api/architect';
+import { createArchitectType, deleteArchitectType, editArchitectType, getArchitectType, settleBalanceType } from '@type/api/architect';
 import { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 
@@ -24,7 +24,7 @@ const createArchitect = async (req: Request, res: Response) => {
       await tx.insert(phone_number).values(
         createArchitectTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
-            customer_id: tArchitect[0].id,
+            architect_id: tArchitect[0].id,
             phone_number: phone_number.phone_number,
             country_code: phone_number.country_code,
             isPrimary: phone_number.isPrimary,
@@ -75,16 +75,16 @@ const editArchitect = async (req: Request, res: Response) => {
   }
 };
 
-const settleArchitectBalance = async (req: Request, res: Response) => {
-  const settleArchitectBalanceTypeAnswer = settleArchitectBalanceType.safeParse(req.params);
+const settleBalance = async (req: Request, res: Response) => {
+  const settleBalanceTypeAnswer = settleBalanceType.safeParse(req.body);
 
-  if (!settleArchitectBalanceTypeAnswer.success){
-    return res.status(400).json({success: false, message: "Input fields are not correct", error: settleArchitectBalanceTypeAnswer.error.flatten()})
+  if (!settleBalanceTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: settleBalanceTypeAnswer.error.flatten()})
   }
 
   try {
     const tArchitect = await db.query.architect.findFirst({
-      where: (architect, { eq }) => eq(architect.id, settleArchitectBalanceTypeAnswer.data.architect_id),
+      where: (architect, { eq }) => eq(architect.id, settleBalanceTypeAnswer.data.architect_id),
       columns: {
         id: true,
         balance: true
@@ -99,9 +99,9 @@ const settleArchitectBalance = async (req: Request, res: Response) => {
       tArchitect.balance = "0.00";
     }
 
-    const newBalance = settleArchitectBalanceTypeAnswer.data.operation == "add" 
-    ? parseFloat(parseFloat(tArchitect.balance).toFixed(2)) + settleArchitectBalanceTypeAnswer.data.amount 
-    : parseFloat(parseFloat(tArchitect.balance).toFixed(2)) - settleArchitectBalanceTypeAnswer.data.amount;
+    const newBalance = settleBalanceTypeAnswer.data.operation == "add" 
+    ? parseFloat(parseFloat(tArchitect.balance).toFixed(2)) + settleBalanceTypeAnswer.data.amount 
+    : parseFloat(parseFloat(tArchitect.balance).toFixed(2)) - settleBalanceTypeAnswer.data.amount;
 
     
     const updatedArchitect = await db.update(architect).set({
@@ -115,7 +115,7 @@ const settleArchitectBalance = async (req: Request, res: Response) => {
 };
 
 const getArchitect = async (req: Request, res: Response) => {
-  const getArchitectTypeAnswer = getArchitectType.safeParse(req.params);
+  const getArchitectTypeAnswer = getArchitectType.safeParse(req.query);
 
   if (!getArchitectTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: getArchitectTypeAnswer.error.flatten()})
@@ -123,7 +123,30 @@ const getArchitect = async (req: Request, res: Response) => {
 
   try {
     const tArchitect = await db.query.architect.findFirst({
-      where: (architect, { eq }) => eq(architect.id, getArchitectTypeAnswer.data.architect_id)
+      where: (architect, { eq }) => eq(architect.id, getArchitectTypeAnswer.data.architect_id),
+      with: {
+        phone_numbers: {
+          columns: {
+            phone_number: true,
+            country_code: true,
+            isPrimary: true,
+            whatsappChatId: true
+          }
+        },
+        orders: {
+          columns: {
+            id: true,
+            architect_commision: true,
+          },
+          with: {
+            delivery_address: {
+               columns: {
+                 address: true,
+               }
+            }
+          }
+        }
+      }
     });
 
     if(!tArchitect){
@@ -197,7 +220,7 @@ const getAllArchitects = async (_req: Request, res: Response) => {
 export {
   createArchitect,
   editArchitect,
-  settleArchitectBalance,
+  settleBalance,
   getArchitect,
   deleteArchitect,
   getAllArchitects,
