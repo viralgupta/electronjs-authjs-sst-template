@@ -73,7 +73,7 @@ export const address = pgTable("address", {
 
 export const address_relation = relations(
   address,
-  ({ one }) => ({
+  ({ one, many }) => ({
     customer: one(customer, {
       fields: [address.customer_id],
       references: [customer.id],
@@ -82,6 +82,7 @@ export const address_relation = relations(
       fields: [address.address_area_id],
       references: [address_area.id],
     }),
+    orders: many(order),
   })
 );
 
@@ -221,7 +222,7 @@ export const order = pgTable("order", {
     .default("UnPaid"),
 
   delivery_date: date("order_delivery_date"),
-  delivery_address: uuid("order_address_id").references(
+  delivery_address_id: uuid("order_delivery_address_id").references(
     () => address.id
   ),
 
@@ -263,8 +264,8 @@ export const order_relation = relations(order, ({ one, many }) => ({
     fields: [order.driver_id],
     references: [driver.id],
   }),
-  order_address: one(address, {
-    fields: [order.delivery_address],
+  delivery_address: one(address, {
+    fields: [order.delivery_address_id],
     references: [address.id],
   }),
   order_items: many(order_item),
