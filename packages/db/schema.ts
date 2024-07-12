@@ -179,10 +179,7 @@ export const item = pgTable("item", {
   }).notNull(),
   quantity: real("item_quantity")
     .notNull(),
-  min_quantity: numeric("item_min_quantity", {
-    precision: 10,
-    scale: 2,
-  }).notNull(),
+  min_quantity: real("item_min_quantity").notNull(),
   min_rate: real("item_min_rate"),
   sale_rate: real("item_min_rate").notNull(),
   rate_dimension: varchar("item_rate_dimension", {
