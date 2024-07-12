@@ -190,7 +190,7 @@ const deleteArchitect = async (req: Request, res: Response) => {
         throw new Error("Customer not found");
       }
       
-      if(tArchitect.balance && parseFloat(parseFloat(tArchitect.balance).toFixed(2)) > 0.00){
+      if(tArchitect.balance && parseFloat(parseFloat(tArchitect.balance).toFixed(2)) !== 0.00){
         throw new Error("Architect has balance pending, Settle Balance first!")
       }
 

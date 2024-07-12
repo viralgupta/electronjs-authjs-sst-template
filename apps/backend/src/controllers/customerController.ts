@@ -369,7 +369,7 @@ const deleteCustomer = async (req: Request, res: Response) => {
         throw new Error("Customer not found");
       }
       
-      if(tCustomer.balance && parseFloat(parseFloat(tCustomer.balance).toFixed(2)) > 0.00){
+      if(tCustomer.balance && parseFloat(parseFloat(tCustomer.balance).toFixed(2)) !== 0.00){
         throw new Error("Customer has balance pending, Settle Balance first!")
       }
 

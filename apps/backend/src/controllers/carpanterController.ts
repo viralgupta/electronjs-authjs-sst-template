@@ -190,7 +190,7 @@ const deleteCarpanter = async (req: Request, res: Response) => {
         throw new Error("Customer not found");
       }
       
-      if(tCarpanter.balance && parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) > 0.00){
+      if(tCarpanter.balance && parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) !== 0.00){
         throw new Error("Carpanter has balance pending, Settle Balance first!")
       }
 
