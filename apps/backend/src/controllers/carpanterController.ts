@@ -1,6 +1,6 @@
 import db from '@db/db';
 import { carpanter, phone_number } from '@db/schema';
-import { createCarpanterType, deleteCarpanterType, editCarpanterType, getCarpanterType, settleCarpanterBalanceType } from '@type/api/carpanter';
+import { createCarpanterType, deleteCarpanterType, editCarpanterType, getCarpanterType, settleBalanceType } from '@type/api/carpanter';
 import { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 
@@ -24,7 +24,7 @@ const createCarpanter = async (req: Request, res: Response) => {
       await tx.insert(phone_number).values(
         createCarpanterTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
-            customer_id: tCarpanter[0].id,
+            carpanter_id: tCarpanter[0].id,
             phone_number: phone_number.phone_number,
             country_code: phone_number.country_code,
             isPrimary: phone_number.isPrimary,
@@ -75,16 +75,16 @@ const editCarpanter = async (req: Request, res: Response) => {
   }
 };
 
-const settleCarpanterBalance = async (req: Request, res: Response) => {
-  const settleCarpanterBalanceTypeAnswer = settleCarpanterBalanceType.safeParse(req.params);
+const settleBalance = async (req: Request, res: Response) => {
+  const settleBalanceTypeAnswer = settleBalanceType.safeParse(req.body);
 
-  if (!settleCarpanterBalanceTypeAnswer.success){
-    return res.status(400).json({success: false, message: "Input fields are not correct", error: settleCarpanterBalanceTypeAnswer.error.flatten()})
+  if (!settleBalanceTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: settleBalanceTypeAnswer.error.flatten()})
   }
 
   try {
     const tCarpanter = await db.query.carpanter.findFirst({
-      where: (carpanter, { eq }) => eq(carpanter.id, settleCarpanterBalanceTypeAnswer.data.carpanter_id),
+      where: (carpanter, { eq }) => eq(carpanter.id, settleBalanceTypeAnswer.data.carpanter_id),
       columns: {
         id: true,
         balance: true
@@ -99,9 +99,9 @@ const settleCarpanterBalance = async (req: Request, res: Response) => {
       tCarpanter.balance = "0.00";
     }
 
-    const newBalance = settleCarpanterBalanceTypeAnswer.data.operation == "add" 
-    ? parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) + settleCarpanterBalanceTypeAnswer.data.amount 
-    : parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) - settleCarpanterBalanceTypeAnswer.data.amount;
+    const newBalance = settleBalanceTypeAnswer.data.operation == "add" 
+    ? parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) + settleBalanceTypeAnswer.data.amount 
+    : parseFloat(parseFloat(tCarpanter.balance).toFixed(2)) - settleBalanceTypeAnswer.data.amount;
 
     
     const updatedCarpanter = await db.update(carpanter).set({
@@ -115,7 +115,7 @@ const settleCarpanterBalance = async (req: Request, res: Response) => {
 };
 
 const getCarpanter = async (req: Request, res: Response) => {
-  const getCarpanterTypeAnswer = getCarpanterType.safeParse(req.params);
+  const getCarpanterTypeAnswer = getCarpanterType.safeParse(req.query);
 
   if (!getCarpanterTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: getCarpanterTypeAnswer.error.flatten()})
@@ -123,7 +123,30 @@ const getCarpanter = async (req: Request, res: Response) => {
 
   try {
     const tCarpanter = await db.query.carpanter.findFirst({
-      where: (carpanter, { eq }) => eq(carpanter.id, getCarpanterTypeAnswer.data.carpanter_id)
+      where: (carpanter, { eq }) => eq(carpanter.id, getCarpanterTypeAnswer.data.carpanter_id),
+      with: {
+        phone_numbers: {
+          columns: {
+            phone_number: true,
+            country_code: true,
+            isPrimary: true,
+            whatsappChatId: true
+          }
+        },
+        orders: {
+          columns: {
+            id: true,
+            carpanter_commision: true,
+          },
+          with: {
+            delivery_address: {
+               columns: {
+                 address: true,
+               }
+            }
+          }
+        }
+      }
     });
 
     if(!tCarpanter){
@@ -197,7 +220,7 @@ const getAllCarpanters = async (_req: Request, res: Response) => {
 export {
   createCarpanter,
   editCarpanter,
-  settleCarpanterBalance,
+  settleBalance,
   getCarpanter,
   deleteCarpanter,
   getAllCarpanters,

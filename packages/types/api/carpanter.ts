@@ -11,17 +11,15 @@ export const createCarpanterType = z
   })
   .strict("Too many fields in request body");
 
-export const editCarpanterType = createCarpanterType
-  .omit({
-    phone_numbers: true,
-    balance: true,
-  })
-  .extend({
+export const editCarpanterType = z.object({
     carpanter_id: z.string(),
+    name: z.string().optional(),
+    profileUrl: z.string().optional(),
+    area: z.string().optional(),
   })
   .strict("Too many fields in request body");
 
-export const settleCarpanterBalanceType = z
+export const settleBalanceType = z
   .object({
     carpanter_id: z.string(),
     amount: z
