@@ -299,6 +299,9 @@ export const order_item = pgTable("order_item", {
   architect_commision_type: varchar("order_item_architect_commision_type", {
     enum: ["percentage", "perPiece"],
   }),
+
+  created_at: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { mode: "date" }).defaultNow().notNull().$onUpdate(() => new Date())
 });
 
 export const order_item_relation = relations(order_item, ({ one }) => ({
