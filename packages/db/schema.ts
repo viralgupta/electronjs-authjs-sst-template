@@ -117,7 +117,7 @@ export const driver = pgTable("driver", {
   id: uuid("driver_id").defaultRandom().notNull().primaryKey(),
   name: varchar("driver_name", { length: 30 }).notNull(),
   profileUrl: text("driver_profileUrl"),
-  vehicle_number: varchar("driver_vehicle_number", { length: 12 }),
+  vehicle_number: varchar("driver_vehicle_number", { length: 20 }),
   size_of_vehicle: varchar("driver_size_of_vehicle", {
     enum: ["rickshaw", "tempo", "chota-hathi", "tata", "truck"],
   }).notNull(),
