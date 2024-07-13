@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, address_area, customer, phone_number } from "@db/schema";
-import { addAddressAreaType, addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { addAddressAreaType, addAddressType, createCustomerType, deleteAddressType, deleteCustomerType, editAddressType, editCustomerType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq, and } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -146,6 +146,19 @@ const addAddress = async (req: Request, res: Response) => {
               eq(address.isPrimary, true)
             )
           );
+      } else {
+        // check if there is any primary address, if not then make this one primary
+
+        const foundPrimaryAddress = await tx.query.address.findFirst({
+          where: (address, { eq, and }) => and(eq(address.customer_id, addAddressTypeAnswer.data.customer_id), eq(address.isPrimary, true)),
+          columns: {
+            isPrimary: true
+          }
+        })
+
+        if(!foundPrimaryAddress){
+          addAddressTypeAnswer.data.isPrimary = true
+        }
       }
 
       await tx.insert(address).values(addAddressTypeAnswer.data);;      
@@ -159,7 +172,89 @@ const addAddress = async (req: Request, res: Response) => {
 }
 
 const editAddress = async (req: Request, res: Response) => {
-  
+  const editAddressTypeAnswer = editAddressType.safeParse(req.body);
+
+  if (!editAddressTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: editAddressTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    
+    const updatedAddress = await db.transaction(async (tx) => {
+      if(editAddressTypeAnswer.data.isPrimary == true){
+        await tx
+          .update(address)
+          .set({ isPrimary: false })
+          .where(
+            and(
+              eq(address.customer_id, editAddressTypeAnswer.data.customer_id),
+              eq(address.isPrimary, true)
+            )
+          );
+      } else if (editAddressTypeAnswer.data.isPrimary == false){
+        // check if address to be updated is primary, if yes then throw error
+        
+        const foundAddress = await tx.query.address.findFirst({
+          where: (address, { eq }) => eq(address.id, editAddressTypeAnswer.data.address_id),
+          columns: {
+            isPrimary: true
+          }
+        })
+
+        if(!foundAddress){
+          throw new Error("Address not found");
+        }
+
+        if(foundAddress.isPrimary){
+          throw new Error("Primary Address cannot be made non-primary");
+        }
+      }
+
+      const {"address_id": _, ...dataToUpdate} = editAddressTypeAnswer.data;
+
+      return await tx.update(address).set(dataToUpdate).where(eq(address.id, editAddressTypeAnswer.data.address_id)).returning();
+    })
+
+    return res.status(200).json({success: true, message: "Address updated successfully", data: updatedAddress});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to update address", error: error.message ? error.message : error});
+  }
+}
+
+const deleteAddress = async (req: Request, res: Response) => {
+  const deleteAddressTypeAnswer = deleteAddressType.safeParse(req.body);
+
+  if (!deleteAddressTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: deleteAddressTypeAnswer.error?.flatten()})
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      const foundAddress = await tx.query.address.findFirst({
+        where: (address, { eq }) => eq(address.id, deleteAddressTypeAnswer.data.address_id),
+        columns: {
+          isPrimary: true,
+          customer_id: true
+        }
+      })
+
+      if(!foundAddress){
+        throw new Error("Address not found");
+      }
+
+      if(foundAddress.isPrimary){
+        // try to find another address and make it primary
+
+        await tx.update(address).set({isPrimary: true}).where(and(eq(address.customer_id, foundAddress.customer_id), eq(address.isPrimary, false)))
+      }
+
+      await tx.delete(address).where(eq(address.id, deleteAddressTypeAnswer.data.address_id));
+    });
+
+    return res.status(200).json({success: true, message: "Address deleted successfully"});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to delete address", error: error.message ? error.message : error});
+  }
 }
 
 const editCustomer = async (req: Request, res: Response) => {
@@ -444,6 +539,8 @@ const getAllCustomers = async (_req: Request, res: Response) => {
 export {
   createCustomer,
   addAddress,
+  editAddress,
+  deleteAddress,
   addAddressArea,
   getAllAddressAreas,
   editCustomer,

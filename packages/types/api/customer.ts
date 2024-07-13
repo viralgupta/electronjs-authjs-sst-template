@@ -26,6 +26,26 @@ export const addAddressType = addressType.extend({
   customer_id: z.string()
 })
 
+export const editAddressType = addressType
+  .partial({
+    house_number: true,
+    address_area_id: true,
+    address: true,
+    city: true,
+    state: true,
+    isPrimary: true,
+    latitude: true,
+    longitude: true,
+  })
+  .extend({
+    address_id: z.string(),
+    customer_id: z.string(),
+  });
+
+export const deleteAddressType = z.object({
+  address_id: z.string(),
+});
+
 export const editCustomerType = createCustomerType.omit({
   phone_numbers: true,
   addresses: true,

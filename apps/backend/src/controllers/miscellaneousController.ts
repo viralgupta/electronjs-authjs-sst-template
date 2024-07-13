@@ -131,7 +131,7 @@ const editPhone = async (req: Request, res: Response) => {
           return new Error("Phone number not found")
         }
 
-        if(foundPhone.isPrimary === true && editPhoneTypeAnswer.data.isPrimary === false){
+        if(foundPhone.isPrimary === true){
           return new Error("At least one phone number should be primary")
         }
       }
@@ -175,38 +175,29 @@ const deletePhone = async (req: Request, res: Response) => {
       if(foundPhone.isPrimary === true){
         // try to find another phone number and make it primary
 
-        const foundAnotherPhone = await tx.query.phone_number.findFirst({
-          where: (phone_number, { ne, and }) => {
-            if(foundPhone.customer_id){
-              return and(
-                eq(phone_number.customer_id, foundPhone.customer_id),
-                ne(phone_number.isPrimary, true)
-              )
-            } else if(foundPhone.architect_id){
-              return and(
-                eq(phone_number.architect_id, foundPhone.architect_id),
-                ne(phone_number.isPrimary, true)
-              )
-            } else if(foundPhone.carpanter_id){
-              return and(
-                eq(phone_number.carpanter_id, foundPhone.carpanter_id),
-                ne(phone_number.isPrimary, true)
-              )
-            } else if(foundPhone.driver_id){
-              return and(
-                eq(phone_number.driver_id, foundPhone.driver_id),
-                ne(phone_number.isPrimary, true)
-              )
-            }
-          },
-          columns: {
-            id: true
-          }
-        })
-
-        if(foundAnotherPhone){
-          await tx.update(phone_number).set({isPrimary: true}).where(eq(phone_number.id, foundAnotherPhone.id));
-        }
+        await tx.update(phone_number).set({isPrimary: true}).where(
+          foundPhone.customer_id
+          ? and(
+              eq(phone_number.customer_id, foundPhone.customer_id),
+              eq(phone_number.isPrimary, false)
+            )
+          : foundPhone.architect_id
+          ? and(
+              eq(phone_number.architect_id, foundPhone.architect_id),
+              eq(phone_number.isPrimary, false)
+            )
+          : foundPhone.carpanter_id
+          ? and(
+              eq(phone_number.carpanter_id, foundPhone.carpanter_id),
+              eq(phone_number.isPrimary, false)
+            )
+          : foundPhone.driver_id
+          ? and(
+              eq(phone_number.driver_id, foundPhone.driver_id),
+              eq(phone_number.isPrimary, false)
+            )
+          : undefined
+        )
       }
 
       await tx.delete(phone_number).where(eq(phone_number.id, deletePhoneTypeAnswer.data.phone_number_id));
@@ -215,10 +206,12 @@ const deletePhone = async (req: Request, res: Response) => {
     return res.status(200).json({success: true, message: "Phone number deleted"});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to delete phone number", error: error.message ? error.message : error});
-  }``
+  };
 }
 
-const createSignedURL = async (req: Request, res: Response) => {}
+const createSignedURL = async (req: Request, res: Response) => {
+
+}
 
 export {
   createPhone,
