@@ -339,7 +339,7 @@ export const estimate_relation = relations(estimate, ({ one, many }) => ({
 export const estimate_item = pgTable("estimate_item", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
   estimate_id: uuid("estimate_item_estimate_id")
-    .references(() => estimate.id)
+    .references(() => estimate.id, { onDelete: "cascade" })
     .notNull(),
   item_id: uuid("estimate_item_item_id")
     .references(() => item.id)
