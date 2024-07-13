@@ -181,7 +181,7 @@ export const item = pgTable("item", {
     .notNull(),
   min_quantity: real("item_min_quantity").notNull(),
   min_rate: real("item_min_rate"),
-  sale_rate: real("item_min_rate").notNull(),
+  sale_rate: real("item_sale_rate").notNull(),
   rate_dimension: varchar("item_rate_dimension", {
     enum: ["Rft", "sq/ft", "piece"],
   }).notNull(),
