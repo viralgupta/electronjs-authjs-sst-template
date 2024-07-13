@@ -235,11 +235,23 @@ const deleteAddress = async (req: Request, res: Response) => {
         columns: {
           isPrimary: true,
           customer_id: true
+        },
+        with: {
+          orders: {
+            columns: {
+              id: true
+            },
+            limit: 1
+          }
         }
       })
 
       if(!foundAddress){
         throw new Error("Address not found");
+      }
+
+      if(foundAddress.orders.length > 0){
+        throw new Error("Address Linked to Orders, Cannot Delete!")
       }
 
       if(foundAddress.isPrimary){
