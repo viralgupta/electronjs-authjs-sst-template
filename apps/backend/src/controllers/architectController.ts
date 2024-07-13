@@ -23,11 +23,17 @@ const createArchitect = async (req: Request, res: Response) => {
 
       const numberswithPrimary = createArchitectTypeAnswer.data.phone_numbers.filter((phone_number) => phone_number.isPrimary);
 
+      const primaryIndex = createArchitectTypeAnswer.data.phone_numbers.findIndex((phone_number) => phone_number.isPrimary);
+
       if(numberswithPrimary.length !== 1 && createArchitectTypeAnswer.data.phone_numbers.length > 0){
         createArchitectTypeAnswer.data.phone_numbers.forEach((phone_number) => {
           phone_number.isPrimary = false;
         })
-        createArchitectTypeAnswer.data.phone_numbers[0].isPrimary = true;
+        if (primaryIndex !== -1) {
+          createArchitectTypeAnswer.data.phone_numbers[primaryIndex].isPrimary = true;
+        } else {
+          createArchitectTypeAnswer.data.phone_numbers[0].isPrimary = true;
+        }
       }
 
       await tx.insert(phone_number).values(

@@ -23,11 +23,17 @@ const createCustomer = async (req: Request, res: Response) => {
 
       const numberswithPrimary = createCustomerTypeAnswer.data.phone_numbers.filter((phone_number) => phone_number.isPrimary);
 
+      const primaryPhoneIndex = createCustomerTypeAnswer.data.phone_numbers.findIndex((phone_number) => phone_number.isPrimary);
+
       if(numberswithPrimary.length !== 1 && createCustomerTypeAnswer.data.phone_numbers.length > 0){
         createCustomerTypeAnswer.data.phone_numbers.forEach((phone_number) => {
           phone_number.isPrimary = false;
         })
-        createCustomerTypeAnswer.data.phone_numbers[0].isPrimary = true;
+        if (primaryPhoneIndex !== -1) {
+          createCustomerTypeAnswer.data.phone_numbers[primaryPhoneIndex].isPrimary = true;
+        } else {
+          createCustomerTypeAnswer.data.phone_numbers[0].isPrimary = true;
+        }
       }
 
       await tx.insert(phone_number).values(
@@ -44,11 +50,17 @@ const createCustomer = async (req: Request, res: Response) => {
 
       const addressWithPrimary = createCustomerTypeAnswer.data.addresses.filter((address) => address.isPrimary);
 
+      const primaryAddressIndex = createCustomerTypeAnswer.data.addresses.findIndex((address) => address.isPrimary);
+
       if(addressWithPrimary.length !== 1 && createCustomerTypeAnswer.data.addresses.length > 0){
         createCustomerTypeAnswer.data.addresses.forEach((address) => {
           address.isPrimary = false;
         })
-        createCustomerTypeAnswer.data.addresses[0].isPrimary = true;
+        if (primaryPhoneIndex !== -1) {
+          createCustomerTypeAnswer.data.addresses[primaryAddressIndex].isPrimary = true;
+        } else {
+          createCustomerTypeAnswer.data.addresses[0].isPrimary = true;
+        }
       }
 
       await tx.insert(address).values(
