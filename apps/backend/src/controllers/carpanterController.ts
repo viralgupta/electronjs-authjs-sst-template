@@ -219,7 +219,11 @@ const deleteCarpanter = async (req: Request, res: Response) => {
 
 const getAllCarpanters = async (_req: Request, res: Response) => {
   try {
-    const carpanters = await db.query.carpanter.findMany();
+    const carpanters = await db.query.carpanter.findMany({
+      columns: {
+        profileUrl: false
+      }
+    });
 
     return res.status(200).json({success: true, message: "Carpanters found", data: carpanters});
   } catch (error: any) {

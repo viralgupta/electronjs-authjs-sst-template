@@ -218,7 +218,11 @@ const deleteArchitect = async (req: Request, res: Response) => {
 
 const getAllArchitects = async (_req: Request, res: Response) => {
   try {
-    const architects = await db.query.architect.findMany();
+    const architects = await db.query.architect.findMany({
+      columns: {
+        profileUrl: false
+      }
+    });
 
     return res.status(200).json({success: true, message: "Architects found", data: architects});
   } catch (error: any) {

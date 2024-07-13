@@ -148,6 +148,9 @@ const getAllDrivers = async (_req: Request, res: Response) => {
           where: (phone_number, { eq }) => eq(phone_number.isPrimary, true),
         },
       },
+      columns: {
+        profileUrl: false
+      }
     });
 
     return res.status(200).json({success: true, message: "Drivers found", data: allDrivers});
