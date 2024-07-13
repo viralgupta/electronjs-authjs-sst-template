@@ -1,6 +1,6 @@
 import db from '@db/db';
 import { item } from '@db/schema';
-import { createItemType, deleteItemType, editItemQuantityType, editItemType, getItemType } from '@type/api/item';
+import { createItemType, deleteItemType, editQuantityType, editItemType, getItemType } from '@type/api/item';
 import { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 
@@ -96,16 +96,34 @@ const editItem = async (req: Request, res: Response) => {
 }
 
 const editQuantity = async (req: Request, res: Response) => { 
-  const editItemQuantityTypeAnswer = editItemQuantityType.safeParse(req.body);
+  const editQuantityTypeAnswer = editQuantityType.safeParse(req.body);
 
-  if (!editItemQuantityTypeAnswer.success){
-    return res.status(400).json({success: false, message: "Input fields are not correct", error: editItemQuantityTypeAnswer.error.flatten()})
+  console.log("running")
+
+  if (!editQuantityTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: editQuantityTypeAnswer.error.flatten()})
   }
 
   try {
+    const foundItem = await db.query.item.findFirst({
+      where: (item, { eq }) => eq(item.id, editQuantityTypeAnswer.data.item_id),
+      columns: {
+        quantity: true
+      }
+    })
+
+    if(!foundItem){
+      return res.status(400).json({success: false, message: "Unable to find item"})
+    }
+
+    const newQuantity =
+      editQuantityTypeAnswer.data.operation === "add"
+      ? foundItem.quantity + editQuantityTypeAnswer.data.quantity
+      : foundItem.quantity - editQuantityTypeAnswer.data.quantity;
+
     const updatedItem = await db.update(item).set({
-      quantity: editItemQuantityTypeAnswer.data.quantity
-    }).where(eq(item.id, editItemQuantityTypeAnswer.data.item_id)).returning()
+      quantity: newQuantity
+    }).where(eq(item.id, editQuantityTypeAnswer.data.item_id)).returning()
 
     if(!updatedItem[0].id){
       return res.status(400).json({success: false, message: "Unable to edit item quantity"})
@@ -145,11 +163,11 @@ const deleteItem = async (req: Request, res: Response) => {
     }
 
     if(foundItem.order_items.length > 0){
-      return res.status(400).json({success: false, message: "Item is being used in orders"})
+      return res.status(400).json({success: false, message: "Item is being used in orders, cannot delete!"})
     }
 
     if(foundItem.quantity > 0){
-      return res.status(400).json({success: false, message: "Item quantity is not 0"})
+      return res.status(400).json({success: false, message: "Item quantity is not 0, cannot delete!"})
     }
 
     const deletedItem = await db.delete(item).where(eq(item.id, deleteItemTypeAnswer.data.item_id)).returning()
