@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import db from "@db/db";
 import { address, address_area, customer, phone_number } from "@db/schema";
 import { addAddressAreaType, addAddressType, createCustomerType, deleteCustomerType, editCustomerType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
 
@@ -21,6 +21,15 @@ const createCustomer = async (req: Request, res: Response) => {
         profileUrl: createCustomerTypeAnswer.data.profileUrl
       }).returning();
 
+      const numberswithPrimary = createCustomerTypeAnswer.data.phone_numbers.filter((phone_number) => phone_number.isPrimary);
+
+      if(numberswithPrimary.length !== 1 && createCustomerTypeAnswer.data.phone_numbers.length > 0){
+        createCustomerTypeAnswer.data.phone_numbers.forEach((phone_number) => {
+          phone_number.isPrimary = false;
+        })
+        createCustomerTypeAnswer.data.phone_numbers[0].isPrimary = true;
+      }
+
       await tx.insert(phone_number).values(
         createCustomerTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
@@ -32,6 +41,16 @@ const createCustomer = async (req: Request, res: Response) => {
           };
         })
       )
+
+      const addressWithPrimary = createCustomerTypeAnswer.data.addresses.filter((address) => address.isPrimary);
+
+      if(addressWithPrimary.length !== 1 && createCustomerTypeAnswer.data.addresses.length > 0){
+        createCustomerTypeAnswer.data.addresses.forEach((address) => {
+          address.isPrimary = false;
+        })
+        createCustomerTypeAnswer.data.addresses[0].isPrimary = true;
+      }
+
       await tx.insert(address).values(
         createCustomerTypeAnswer.data.addresses.map((address) => {
           return {
@@ -115,30 +134,32 @@ const addAddress = async (req: Request, res: Response) => {
 
   try {
 
-    const tCustomer = await db.select({id: customer.id}).from(customer).where(eq(customer.id, addAddressTypeAnswer.data.customer_id));
-    if(tCustomer.length === 0){
-      return res.status(400).json({ success: false, message: "Customer not found" });
-    }
-    await db.insert(address).values(
-      addAddressTypeAnswer.data.addresses.map((address) => {
-        return {
-          customer_id: tCustomer[0].id,
-          house_number: address.house_number,
-          address_area_id: address.address_area_id,
-          address: address.address,
-          city: address.city,
-          state: address.state,
-          isPrimary: address.isPrimary,
-          latitude: address.latitude,
-          longitude: address.longitude
-        }
-      })
-    );
+    await db.transaction(async (tx) => {
+
+      if(addAddressTypeAnswer.data.isPrimary == true){
+        await tx
+          .update(address)
+          .set({ isPrimary: false })
+          .where(
+            and(
+              eq(address.customer_id, addAddressTypeAnswer.data.customer_id),
+              eq(address.isPrimary, true)
+            )
+          );
+      }
+
+      await tx.insert(address).values(addAddressTypeAnswer.data);;      
+    })
+
 
     return res.status(200).json({success: true, message: "Address added successfully"});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to add address", error: error.message ? error.message : error});
   }
+}
+
+const editAddress = async (req: Request, res: Response) => {
+  
 }
 
 const editCustomer = async (req: Request, res: Response) => {

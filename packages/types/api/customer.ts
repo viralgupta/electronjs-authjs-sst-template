@@ -22,8 +22,7 @@ export const addAddressAreaType = z.object({
   area: z.string().max(50, "Area name too long"),
 }).strict("Too many fields in request body");
 
-export const addAddressType = z.object({
-  addresses: z.array(addressType),
+export const addAddressType = addressType.extend({
   customer_id: z.string()
 })
 

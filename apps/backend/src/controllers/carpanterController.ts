@@ -21,6 +21,16 @@ const createCarpanter = async (req: Request, res: Response) => {
         balance: createCarpanterTypeAnswer.data.balance
       }).returning();
 
+      
+      const numberswithPrimary = createCarpanterTypeAnswer.data.phone_numbers.filter((phone_number) => phone_number.isPrimary);
+
+      if(numberswithPrimary.length !== 1 && createCarpanterTypeAnswer.data.phone_numbers.length > 0){
+        createCarpanterTypeAnswer.data.phone_numbers.forEach((phone_number) => {
+          phone_number.isPrimary = false;
+        })
+        createCarpanterTypeAnswer.data.phone_numbers[0].isPrimary = true;
+      }
+
       await tx.insert(phone_number).values(
         createCarpanterTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {

@@ -11,8 +11,9 @@ export const createArchitectType = z
   })
   .strict("Too many fields in request body");
 
-export const editArchitectType = z.object({
-  architect_id: z.string(),
+export const editArchitectType = z
+  .object({
+    architect_id: z.string(),
     name: z.string().optional(),
     profileUrl: z.string().optional(),
     area: z.string().optional(),

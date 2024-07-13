@@ -21,6 +21,15 @@ const createArchitect = async (req: Request, res: Response) => {
         balance: createArchitectTypeAnswer.data.balance
       }).returning();
 
+      const numberswithPrimary = createArchitectTypeAnswer.data.phone_numbers.filter((phone_number) => phone_number.isPrimary);
+
+      if(numberswithPrimary.length !== 1 && createArchitectTypeAnswer.data.phone_numbers.length > 0){
+        createArchitectTypeAnswer.data.phone_numbers.forEach((phone_number) => {
+          phone_number.isPrimary = false;
+        })
+        createArchitectTypeAnswer.data.phone_numbers[0].isPrimary = true;
+      }
+
       await tx.insert(phone_number).values(
         createArchitectTypeAnswer.data.phone_numbers.map((phone_number) => {
           return {
