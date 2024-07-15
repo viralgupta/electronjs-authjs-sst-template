@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { desc, relations } from "drizzle-orm";
 import {
   uuid,
   text,
@@ -363,3 +363,10 @@ export const estimate_item_relation = relations(estimate_item, ({ one }) => ({
     references: [item.id],
   }),
 }));
+
+export const resource = pgTable("resource", {
+  id: uuid("resource_id").primaryKey().defaultRandom().notNull(),
+  key: text("resource_key").notNull(),
+  name: varchar("resource_name", { length: 100 }).notNull(),
+  description: text("resource_description"),
+})
