@@ -1,4 +1,7 @@
 import * as S3 from "@aws-sdk/client-s3"
+import db from "@db/db";
+import { resource } from "@db/schema";
+import { createResourceOnUploadHandlerType } from "@type/api/miscellaneous";
 
 const createResourceOnUploadHandler = async (evt: any) => {
   const uploaderIP = evt.Records[0].requestParameters.sourceIPAddress
@@ -12,20 +15,45 @@ const createResourceOnUploadHandler = async (evt: any) => {
     Key: objectKey
   })
 
+
   try {
-    
     const metaData = (await client.send(getMetaDataCommand)).Metadata;
-    console.log(metaData);
+    
+    const createResourceOnUploadHandlerTypeAnswer = createResourceOnUploadHandlerType.safeParse(metaData);
+    
+    if (!createResourceOnUploadHandlerTypeAnswer.success) {
+      console.error("Invalid metadata: ", createResourceOnUploadHandlerTypeAnswer.error.flatten());
+      deleteObject(objectKey, bucketName, client);
+      return;
+    }
+
+    await db.insert(resource).values({
+      key: createResourceOnUploadHandlerTypeAnswer.data.key,
+      name: createResourceOnUploadHandlerTypeAnswer.data.name,
+      description: createResourceOnUploadHandlerTypeAnswer.data.description,
+    })
 
   } catch (error) {
-    
-    console.log(error);
+    console.log("Unable to create resource in db:", error);
+    deleteObject(objectKey, bucketName, client);
   }
 
-
-  return {
-    statusCode: 200,
-  };
+  return;
 };
+
+
+async function deleteObject(key: string, bucket: string, client: S3.S3Client) {
+  const deleteObjectCommand = new S3.DeleteObjectCommand({
+    Bucket: bucket,
+    Key: key
+  });
+
+  try {
+    await client.send(deleteObjectCommand);
+  } catch (error: any) {
+    console.error(error.message);
+  }
+    
+}
 
 export default createResourceOnUploadHandler;

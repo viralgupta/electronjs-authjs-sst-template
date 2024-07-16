@@ -18,8 +18,18 @@ export function API({ stack }: StackContext) {
       createResourceOnUpload: {
         function: {
           handler: "packages/functions/src/functions.createResourceOnUpload",
+          bind: [DB_URL],
+          timeout: 10
         },
         events: ["object_created"]
+      },
+      removeResourceOnDelete: {
+        function: {
+          handler: "packages/functions/src/functions.removeResourceOnDelete",
+          bind: [DB_URL],
+          timeout: 10
+        },
+        events: ["object_removed"]
       },
     }
   });
