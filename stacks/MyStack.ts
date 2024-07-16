@@ -7,12 +7,24 @@ export function API({ stack }: StackContext) {
 
   const api = new Api(stack, "api", {
     routes: {
-      $default: "packages/functions/src/lambda.handler",
+      $default: "packages/functions/src/backend.handler",
     },
   });
 
   const ProfileBucket = new Bucket(stack, "ProfileBucket");
-  const ResourceBucket = new Bucket(stack, "ResourceBucket");
+  const ResourceBucket = new Bucket(stack, "ResourceBucket", {
+    blockPublicACLs: true,
+    notifications: {
+      createResourceOnUpload: {
+        function: {
+          handler: "packages/functions/src/functions.createResourceOnUpload",
+        },
+        events: ["object_created"]
+      },
+    }
+  });
+
+  ResourceBucket.attachPermissionsToNotification("createResourceOnUpload", ["s3"])
 
   api.bind([AUTH_SECRET, DB_URL, ProfileBucket, ResourceBucket]);
 
