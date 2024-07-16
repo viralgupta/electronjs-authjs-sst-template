@@ -84,3 +84,10 @@ export const deletePhoneType = z
   .object({
     phone_number_id: z.string(),
   })
+
+export const createPutSignedURLType = z.object({
+  type: z.enum(["PROFILE", "DOCUMENT"]),
+  extension: z.string().max(5),
+  name: z.string().max(100),
+  description: z.string().optional(),
+})

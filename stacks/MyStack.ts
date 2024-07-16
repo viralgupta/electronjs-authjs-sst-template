@@ -1,4 +1,4 @@
-import { StackContext, Api, Config } from "sst/constructs";
+import { StackContext, Api, Config, Bucket } from "sst/constructs";
 
 export function API({ stack }: StackContext) {
 
@@ -11,7 +11,10 @@ export function API({ stack }: StackContext) {
     },
   });
 
-  api.bind([AUTH_SECRET, DB_URL])
+  const ProfileBucket = new Bucket(stack, "ProfileBucket");
+  const ResourceBucket = new Bucket(stack, "ResourceBucket");
+
+  api.bind([AUTH_SECRET, DB_URL, ProfileBucket, ResourceBucket]);
 
   stack.addOutputs({
     ApiEndpoint: api.url,

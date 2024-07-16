@@ -1,8 +1,11 @@
 import db from "@db/db";
 import { phone_number } from "@db/schema";
-import { createPhoneType, deletePhoneType, editPhoneType } from "@type/api/miscellaneous";
+import { createPhoneType, createPutSignedURLType, deletePhoneType, editPhoneType } from "@type/api/miscellaneous";
 import { Request, Response } from "express";
 import { and, eq } from "drizzle-orm";
+import * as S3 from "@aws-sdk/client-s3"
+import { Bucket } from "sst/node/bucket";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const createPhone = async (req: Request, res: Response) => {
   const createPhoneTypeAnswer = createPhoneType.safeParse(req.body);
@@ -209,13 +212,57 @@ const deletePhone = async (req: Request, res: Response) => {
   };
 }
 
-const createSignedURL = async (req: Request, res: Response) => {
+const createPutSignedURL = async (req: Request, res: Response) => {
+  const createPutSignedURLTypeAnswer = createPutSignedURLType.safeParse(req.body);
 
+  if (!createPutSignedURLTypeAnswer.success) {
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: createPutSignedURLTypeAnswer.error.flatten()})
+  }
+
+  try {
+    const key = `${crypto.randomUUID()}.${createPutSignedURLTypeAnswer.data.extension.toLowerCase()}`;
+
+    const command = new S3.PutObjectCommand({
+      ACL: "private",
+      Key: key,
+      Bucket: Bucket.ResourceBucket.bucketName,
+      Metadata: {
+        "Name": createPutSignedURLTypeAnswer.data.name,
+        "Description": createPutSignedURLTypeAnswer.data.description ?? "",
+        "Key": key
+      }
+    });
+
+    const url = await getSignedUrl(new S3.S3Client({}), command, {
+      expiresIn: 60 * 10, // 10 minutes
+    });
+
+    return res.status(200).json({success: true, message: "PUT Signed URL created", data: url});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to create signed URL", error: error.message ? error.message : error});
+  }
+}
+
+const createGetSignedURL = async (req: Request, res: Response) => {
+  // const createSignedURLTypeAnswer = createSignedURLType.safeParse(req.body);
+
+  // if (!createSignedURLTypeAnswer.success) {
+  //   return res.status(400).json({success: false, message: "Input fields are not correct", error: createSignedURLTypeAnswer.error.flatten()})
+  // }
+
+  try {
+
+
+    return res.status(200).json({success: true, message: "GET Signed URL created", data: "signedUrl"});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to create signed URL", error: error.message ? error.message : error});
+  }
 }
 
 export {
   createPhone,
   editPhone,
   deletePhone,
-  createSignedURL
+  createPutSignedURL,
+  createGetSignedURL,
 }
