@@ -1,4 +1,5 @@
 import { StackContext, Api, Config, Bucket } from "sst/constructs";
+import { LayerVersion } from "aws-cdk-lib/aws-lambda";
 
 export function API({ stack }: StackContext) {
 
@@ -19,7 +20,10 @@ export function API({ stack }: StackContext) {
         function: {
           handler: "packages/functions/src/functions.createResourceOnUpload",
           bind: [DB_URL],
-          timeout: 10
+          timeout: 10,
+          layers: [
+            LayerVersion.fromLayerVersionArn(stack, "GhostScriptLayer", "arn:aws:lambda:ap-south-1:764866452798:layer:ghostscript:15")
+          ],
         },
         events: ["object_created"]
       },
@@ -35,6 +39,7 @@ export function API({ stack }: StackContext) {
   });
 
   ResourceBucket.attachPermissionsToNotification("createResourceOnUpload", ["s3"])
+  ResourceBucket.attachPermissionsToNotification("removeResourceOnDelete", ["s3"])
 
   api.bind([AUTH_SECRET, DB_URL, ProfileBucket, ResourceBucket]);
 

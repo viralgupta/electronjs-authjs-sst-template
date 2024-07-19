@@ -10,5 +10,8 @@ export default {
   },
   stacks(app) {
     app.stack(API);
+    if (app.stage === "dev"){
+      app.setDefaultRemovalPolicy("destroy");
+    }
   }
 } satisfies SSTConfig;
