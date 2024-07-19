@@ -92,11 +92,16 @@ export const createPutSignedURLType = z.object({
   description: z.string().optional(),
 })
 
-export const createResourceOnUploadHandlerType = createPutSignedURLType.omit({
-  type: true,
-  extension: true,
-}).extend({
-  key: z.string(),
+export const editResourceType = z.object({
+  resource_id: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
 })
 
-export const removeResourceOnDeleteHandlerType = z.string();
+export const createGetSignedURLType = z.object({
+  resource_id: z.string(),
+})
+
+export const deleteResourceType = z.object({
+  resource_id: z.string(),
+})

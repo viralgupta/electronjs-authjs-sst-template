@@ -1,12 +1,13 @@
 import db from "@db/db";
-import { phone_number } from "@db/schema";
-import { createPhoneType, createPutSignedURLType, deletePhoneType, editPhoneType } from "@type/api/miscellaneous";
+import { phone_number, resource } from "@db/schema";
+import { createGetSignedURLType, createPhoneType, createPutSignedURLType, deletePhoneType, deleteResourceType, editPhoneType, editResourceType } from "@type/api/miscellaneous";
 import { Request, Response } from "express";
 import { and, eq } from "drizzle-orm";
 import * as S3 from "@aws-sdk/client-s3"
 import { Bucket } from "sst/node/bucket";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
+import { Config } from "sst/node/config";
 
 const createPhone = async (req: Request, res: Response) => {
   const createPhoneTypeAnswer = createPhoneType.safeParse(req.body);
@@ -236,7 +237,7 @@ const createPutSignedURL = async (req: Request, res: Response) => {
     });
 
     const url = await getSignedUrl(new S3.S3Client({}), command, {
-      expiresIn: 60 * 10, // 10 minutes
+      expiresIn: Config.STAGE == 'dev' ? 60 * 60 : 60 * 5, // 60 / 5 minutes
     });
 
     return res.status(200).json({success: true, message: "PUT Signed URL created", data: url});
@@ -245,19 +246,111 @@ const createPutSignedURL = async (req: Request, res: Response) => {
   }
 }
 
-const createGetSignedURL = async (req: Request, res: Response) => {
-  // const createSignedURLTypeAnswer = createSignedURLType.safeParse(req.body);
+const editResource = async (req: Request, res: Response) => {
+  const editResourceTypeAnswer = editResourceType.safeParse(req.body);
 
-  // if (!createSignedURLTypeAnswer.success) {
-  //   return res.status(400).json({success: false, message: "Input fields are not correct", error: createSignedURLTypeAnswer.error.flatten()})
-  // }
+  if (!editResourceTypeAnswer.success) {
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: editResourceTypeAnswer.error.flatten()})
+  }
 
   try {
 
+    await db.update(resource).set(editResourceTypeAnswer.data).where(eq(resource.id, editResourceTypeAnswer.data.resource_id));
 
-    return res.status(200).json({success: true, message: "GET Signed URL created", data: "signedUrl"});
+    return res.status(200).json({success: true, message: "Resource updated"});
   } catch (error: any) {
-    return res.status(400).json({success: false, message: "Unable to create signed URL", error: error.message ? error.message : error});
+    return res.status(400).json({success: false, message: "Unable to update resource", error: error.message ? error.message : error});
+  }
+}
+
+const deleteResource = async (req: Request, res: Response) => {
+  const deleteResourceTypeAnswer = deleteResourceType.safeParse(req.body);
+
+  if (!deleteResourceTypeAnswer.success) {
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: deleteResourceTypeAnswer.error.flatten()})
+  }
+
+  try {
+
+    const resource = await db.query.resource.findFirst({
+      where: (resource, { eq }) => eq(resource.id, deleteResourceTypeAnswer.data.resource_id),
+      columns: {
+        key: true
+      }
+    })
+
+    if(!resource){
+      return res.status(400).json({success: false, message: "Resource not found"});
+    }
+
+    const client = new S3.S3Client({});
+
+    const command = new S3.DeleteObjectCommand({
+      Bucket: Bucket.ResourceBucket.bucketName,
+      Key: resource.key
+    });
+
+    const response = await client.send(command);
+    
+    if(response.$metadata.httpStatusCode !== 204){
+      return res.status(400).json({success: false, message: "Unable to delete resource"});
+    }
+
+    return res.status(200).json({success: true, message: "Resource deleted"});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to delete resource", error: error.message ? error.message : error});
+  }
+}
+
+const createGetSignedURL = async (req: Request, res: Response) => {
+  const createGetSignedURLTypeAnswer = createGetSignedURLType.safeParse(req.body);
+
+  if (!createGetSignedURLTypeAnswer.success) {
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: createGetSignedURLTypeAnswer.error.flatten()})
+  }
+
+  try {
+
+    const resource = await db.query.resource.findFirst({
+      where: (resource, { eq }) => eq(resource.id, createGetSignedURLTypeAnswer.data.resource_id),
+      columns: {
+        key: true
+      }
+    })
+
+    if(!resource){
+      return res.status(400).json({success: false, message: "Resource not found"});
+    }
+
+    const command = new S3.GetObjectCommand({
+      Bucket: Bucket.ResourceBucket.bucketName,
+      Key: resource.key,
+    });
+
+    const url = await getSignedUrl(new S3.S3Client({}), command, {
+      expiresIn: Config.STAGE == 'dev' ? 60 * 60 : 60 * 5, // 60 / 5 minutes
+    });
+
+    return res.status(200).json({success: true, message: "GET Signed URL created", data: url});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to create GET signed URL", error: error.message ? error.message : error});
+  }
+}
+
+const getAllResources = async (_req: Request, res: Response) => {
+  try {
+    const resources = await db.query.resource.findMany({
+      columns: {
+        id: true,
+        name: true,
+        description: true,
+        previewKey: true,
+      }
+    });
+
+    return res.status(200).json({success: true, message: "Resources fetched", data: resources});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to fetch resources", error: error.message ? error.message : error});
   }
 }
 
@@ -266,5 +359,8 @@ export {
   editPhone,
   deletePhone,
   createPutSignedURL,
+  editResource,
   createGetSignedURL,
+  deleteResource,
+  getAllResources
 }

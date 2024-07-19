@@ -1,7 +1,7 @@
 import * as S3 from "@aws-sdk/client-s3"
 import db from "@db/db";
 import { resource } from "@db/schema";
-import { removeResourceOnDeleteHandlerType } from "@type/api/miscellaneous";
+import { removeResourceOnDeleteHandlerType } from "@type/functions/miscellaneous";
 import { eq } from "drizzle-orm";
 import { Config } from "sst/node/config";
 
@@ -19,8 +19,6 @@ const removeResourceOnDeleteHandler = async (evt: any) => {
       return;
     }
 
-    if(Config.STAGE === "dev") return;
-
     const s3 = new S3.S3Client({});
 
     const previewObjectKey = objectKey.split("/")[0].concat("/preview.png");
@@ -30,7 +28,9 @@ const removeResourceOnDeleteHandler = async (evt: any) => {
       Key: previewObjectKey,
     });
 
-    await s3.send(deleteObjectCommand);
+    if(Config.STAGE !== "dev") {
+      await s3.send(deleteObjectCommand);
+    }
 
     await db.delete(resource).where(eq(resource.key, removeResourceOnDeeHandlerTypeAnswer.data));
 

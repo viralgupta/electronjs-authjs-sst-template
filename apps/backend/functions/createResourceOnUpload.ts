@@ -1,7 +1,7 @@
 import * as S3 from "@aws-sdk/client-s3"
 import db from "@db/db";
 import { resource } from "@db/schema";
-import { createResourceOnUploadHandlerType } from "@type/api/miscellaneous";
+import { createResourceOnUploadHandlerType } from "@type/functions/miscellaneous";
 import pdfPreviewOnUpload from "./pdfPreviewOnUpload";
 import { Config } from "sst/node/config";
 
