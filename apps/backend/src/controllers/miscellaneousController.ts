@@ -223,7 +223,7 @@ const createPutSignedURL = async (req: Request, res: Response) => {
 
   try {
     const uuid = crypto.randomUUID();
-    const key = `${uuid}/resource.${createPutSignedURLTypeAnswer.data.extension.toLowerCase()}`;
+    const key = `${uuid}/${createPutSignedURLTypeAnswer.data.file_name}.${createPutSignedURLTypeAnswer.data.extension.toLowerCase()}`;
 
     const command = new S3.PutObjectCommand({
       ACL: "private",

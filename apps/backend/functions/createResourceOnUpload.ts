@@ -2,9 +2,7 @@ import * as S3 from "@aws-sdk/client-s3"
 import db from "@db/db";
 import { resource } from "@db/schema";
 import { createResourceOnUploadHandlerType } from "@type/functions/miscellaneous";
-import pdfPreviewOnUpload from "./utils/pdfPreviewOnUpload";
-import imagePreviewOnUpload from "./utils/imagePreviewOnUpload";
-import { Config } from "sst/node/config";
+import createPreviewOnUpload from "./utils/createPreviewOnUpload";
 
 const createResourceOnUploadHandler = async (evt: any) => {
   // const uploaderIP = evt.Records[0].requestParameters.sourceIPAddress
@@ -31,19 +29,23 @@ const createResourceOnUploadHandler = async (evt: any) => {
       return;
     }
 
+    const fileExtension = getFileExtension(createResourceOnUploadHandlerTypeAnswer.data.key);
+
+    if (!fileExtension) {
+      console.error("Invalid / No file extension");
+      deleteObject(objectKey, bucketName, client);
+      return;
+    }
+
     await db.insert(resource).values({
+      extension: fileExtension,
       key: createResourceOnUploadHandlerTypeAnswer.data.key,
       name: createResourceOnUploadHandlerTypeAnswer.data.name,
       description: createResourceOnUploadHandlerTypeAnswer.data.description,
     })
 
-    if(createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("pdf")) {
-      if(Config.STAGE === "dev") return;
-      await pdfPreviewOnUpload(createResourceOnUploadHandlerTypeAnswer.data.key, bucketName, client, await object.Body?.transformToByteArray());    
-    }
-
-    if(createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("jpg") || createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("jpeg") || createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("png")) {
-      await imagePreviewOnUpload(createResourceOnUploadHandlerTypeAnswer.data.key, bucketName, client, await object.Body?.transformToByteArray());    
+    if(fileExtension === "pdf" || fileExtension === "png" || fileExtension === "jpg" || fileExtension === "jpeg") {
+      await createPreviewOnUpload(createResourceOnUploadHandlerTypeAnswer.data.key, fileExtension, bucketName, client, await object.Body?.transformToByteArray());    
     }
 
   } catch (error) {
@@ -53,6 +55,10 @@ const createResourceOnUploadHandler = async (evt: any) => {
   return;
 };
 
+function getFileExtension(fileName: string) {
+  const lastDotIndex = fileName.lastIndexOf('.');
+  return lastDotIndex !== -1 ? fileName.slice(lastDotIndex + 1) : null;
+}
 
 async function deleteObject(key: string, bucket: string, client: S3.S3Client) {
   const deleteObjectCommand = new S3.DeleteObjectCommand({

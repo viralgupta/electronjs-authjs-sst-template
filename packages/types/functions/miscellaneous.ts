@@ -1,10 +1,8 @@
 import { z } from "zod";
-import { createPutSignedURLType } from "../api/miscellaneous";
 
-export const createResourceOnUploadHandlerType = createPutSignedURLType.omit({
-  type: true,
-  extension: true,
-}).extend({
+export const createResourceOnUploadHandlerType = z.object({
+  name: z.string().max(100),
+  description: z.string().optional(),
   key: z.string(),
 })
 
