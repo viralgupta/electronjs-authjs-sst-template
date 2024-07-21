@@ -70,7 +70,7 @@ async function Convert(body: Uint8Array): Promise<Buffer> {
       const file = fs.readFileSync(outputname);
       resolve(file);
     } catch (error: any) {
-      console.error("Error while Writing File:", error.message);
+      console.error("Error while Converting File:", error.message);
       reject(error.message);
     }
   });

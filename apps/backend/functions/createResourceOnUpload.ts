@@ -2,7 +2,8 @@ import * as S3 from "@aws-sdk/client-s3"
 import db from "@db/db";
 import { resource } from "@db/schema";
 import { createResourceOnUploadHandlerType } from "@type/functions/miscellaneous";
-import pdfPreviewOnUpload from "./pdfPreviewOnUpload";
+import pdfPreviewOnUpload from "./utils/pdfPreviewOnUpload";
+import imagePreviewOnUpload from "./utils/imagePreviewOnUpload";
 import { Config } from "sst/node/config";
 
 const createResourceOnUploadHandler = async (evt: any) => {
@@ -39,6 +40,10 @@ const createResourceOnUploadHandler = async (evt: any) => {
     if(createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("pdf")) {
       if(Config.STAGE === "dev") return;
       await pdfPreviewOnUpload(createResourceOnUploadHandlerTypeAnswer.data.key, bucketName, client, await object.Body?.transformToByteArray());    
+    }
+
+    if(createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("jpg") || createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("jpeg") || createResourceOnUploadHandlerTypeAnswer.data.key.endsWith("png")) {
+      await imagePreviewOnUpload(createResourceOnUploadHandlerTypeAnswer.data.key, bucketName, client, await object.Body?.transformToByteArray());    
     }
 
   } catch (error) {

@@ -3,7 +3,6 @@ import db from "@db/db";
 import { resource } from "@db/schema";
 import { removeResourceOnDeleteHandlerType } from "@type/functions/miscellaneous";
 import { eq } from "drizzle-orm";
-import { Config } from "sst/node/config";
 
 const removeResourceOnDeleteHandler = async (evt: any) => {
   const objectKey: string = evt.Records[0].s3.object.key;
@@ -28,9 +27,7 @@ const removeResourceOnDeleteHandler = async (evt: any) => {
       Key: previewObjectKey,
     });
 
-    if(Config.STAGE !== "dev") {
-      await s3.send(deleteObjectCommand);
-    }
+    await s3.send(deleteObjectCommand);
 
     await db.delete(resource).where(eq(resource.key, removeResourceOnDeeHandlerTypeAnswer.data));
 
