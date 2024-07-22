@@ -6,6 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@backend/*": ["../../apps/backend/*"],
+      "@db/*": ["../db/*"],
     }
   }
 }
