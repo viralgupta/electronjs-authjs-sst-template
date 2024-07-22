@@ -345,6 +345,7 @@ const getAllResources = async (_req: Request, res: Response) => {
         name: true,
         description: true,
         previewKey: true,
+        extension: true
       }
     });
 
