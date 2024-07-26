@@ -218,7 +218,7 @@ export const order = pgTable("order", {
     .notNull()
     .default("UnPaid"),
 
-  delivery_date: date("order_delivery_date"),
+  delivery_date: timestamp("order_delivery_date", { mode: "date" }),
   delivery_address_id: uuid("order_delivery_address_id").references(
     () => address.id
   ),
