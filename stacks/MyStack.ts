@@ -7,6 +7,14 @@ export function API({ stack }: StackContext) {
   const AUTH_SECRET = new Config.Secret(stack, "AUTH_SECRET");
   const DB_URL = new Config.Secret(stack, "DB_URL");
 
+  const HIGH_PRIORITY_CUSTOMER = new Config.Parameter(stack, "HIGH_PRIORITY_CUSTOMER", {
+    value: "200000"
+  })
+
+  const MID_PRIORITY_CUSTOMER = new Config.Parameter(stack, "MID_PRIORITY_CUSTOMER", {
+    value: "50000"
+  })
+
   const api = new Api(stack, "api", {
     routes: {
       $default: "packages/functions/src/backend.handler",
@@ -43,7 +51,7 @@ export function API({ stack }: StackContext) {
   ResourceBucket.attachPermissionsToNotification("createResourceOnUpload", ["s3"])
   ResourceBucket.attachPermissionsToNotification("removeResourceOnDelete", ["s3"])
 
-  api.bind([AUTH_SECRET, DB_URL, ProfileBucket, ResourceBucket]);
+  api.bind([AUTH_SECRET, DB_URL, HIGH_PRIORITY_CUSTOMER, MID_PRIORITY_CUSTOMER, ProfileBucket, ResourceBucket]);
 
   stack.addOutputs({
     ApiEndpoint: api.url,

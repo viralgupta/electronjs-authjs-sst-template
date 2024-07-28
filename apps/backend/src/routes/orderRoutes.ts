@@ -1,11 +1,11 @@
 import express from "express"
-import { createOrder, editOrderNote, editOrderCustomerId, editOrderCarpanterId, editOrderArchitectId, editOrderDriverId, editOrderStatus, editOrderPriority, editOrderDeliveryDate, editOrderDeliveryAddressId, editOrderLabourAndFrateCost, editOrderDiscount, settleBalance, editOrderItems, getAllOrders, getOrder } from "../controllers/orderController"
+import { createOrder, editOrderNote, addOrderCustomerId, editOrderCarpanterId, editOrderArchitectId, editOrderDriverId, editOrderStatus, editOrderPriority, editOrderDeliveryDate, editOrderDeliveryAddressId, editOrderLabourAndFrateCost, editOrderDiscount, settleBalance, editOrderItems, getAllOrders, getOrder } from "../controllers/orderController"
 
 const orderRouter = express.Router()
 
 orderRouter.route('/createOrder').post(createOrder)
 orderRouter.route('/editOrderNote').put(editOrderNote)
-orderRouter.route('/editOrderCustomerId').put(editOrderCustomerId)
+orderRouter.route('/addOrderCustomerId').put(addOrderCustomerId)
 orderRouter.route('/editOrderCarpanterId').put(editOrderCarpanterId)
 orderRouter.route('/editOrderArchitectId').put(editOrderArchitectId)
 orderRouter.route('/editOrderDriverId').put(editOrderDriverId)

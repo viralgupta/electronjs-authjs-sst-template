@@ -46,6 +46,10 @@ export const deleteAddressType = z.object({
   address_id: z.string(),
 });
 
+export const getCustomerAddressesType = z.object({
+  customer_id: z.string().uuid()
+})
+
 export const editCustomerType = createCustomerType.omit({
   phone_numbers: true,
   addresses: true,

@@ -37,8 +37,6 @@ export const createOrderType = z.object({
   status: z.enum(["Pending", "Delivered"]),
   priority: z.enum(["High", "Medium", "Low"]),
   
-  payment_status: z.enum(["UnPaid", "Partial", "Paid"]),
-
   delivery_date: z.date().optional(),
   delivery_address_id: z.string().uuid().optional(),
 
@@ -67,7 +65,7 @@ export const editOrderNoteType = z.object({
   note: z.string()
 })
 
-export const editOrderCustomerIdType = z.object({
+export const addOrderCustomerIdType = z.object({
   order_id: z.string(),
   customer_id: z.string().uuid()
 })
@@ -104,7 +102,6 @@ export const editOrderDeliveryDateType = z.object({
 
 export const editOrderDeliveryAddressIdType = z.object({
   order_id: z.string(),
-  customer_id: z.string().uuid(),
   delivery_address_id: z.string().uuid()
 })
 

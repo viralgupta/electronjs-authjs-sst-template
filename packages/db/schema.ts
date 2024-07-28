@@ -6,7 +6,6 @@ import {
   boolean,
   integer,
   numeric,
-  date,
   timestamp,
   varchar,
   real,

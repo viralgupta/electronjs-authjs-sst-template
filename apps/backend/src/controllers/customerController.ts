@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import db from "@db/db";
 import { address, address_area, customer, phone_number } from "@db/schema";
-import { addAddressAreaType, addAddressType, createCustomerType, deleteAddressType, deleteCustomerType, editAddressType, editCustomerType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
+import { addAddressAreaType, addAddressType, createCustomerType, deleteAddressType, deleteCustomerType, editAddressType, editCustomerType, getCustomerAddressesType, getCustomersByAreaType, getCustomerType, settleBalanceType } from "@type/api/customer";
 import { eq, and } from "drizzle-orm";
 
 const createCustomer = async (req: Request, res: Response) => {
@@ -278,6 +278,40 @@ const deleteAddress = async (req: Request, res: Response) => {
     return res.status(200).json({success: true, message: "Address deleted successfully"});
   } catch (error: any) {
     return res.status(400).json({success: false, message: "Unable to delete address", error: error.message ? error.message : error});
+  }
+}
+
+const getCustomerAddresses = async (req: Request, res: Response) => {
+  const getCustomerAddressesTypeAnswer = getCustomerAddressesType.safeParse(req.query);
+
+  if(!getCustomerAddressesTypeAnswer.success) {
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: getCustomerAddressesTypeAnswer.error?.flatten()})
+  }
+
+  try {
+
+    const addresses = await db.transaction(async (tx) => {
+      const tAddresses = await tx.query.address.findMany({
+        where: (address, { eq }) => eq(address.customer_id, getCustomerAddressesTypeAnswer.data.customer_id),
+        columns: {
+          house_number: true,
+          address: true,
+          isPrimary: true,
+        }, 
+        with: {
+          address_area: {
+            columns: {
+              area: true
+            }
+          }
+        }
+      })
+      return tAddresses;
+    })
+    
+    return res.status(200).json({success: true, message: "Customer Address fetched successfully", data: addresses});
+  } catch (error: any) {
+    return res.status(400).json({success: false, message: "Unable to get customer address", error: error.message ? error.message : error});
   }
 }
 
@@ -565,6 +599,7 @@ export {
   addAddress,
   editAddress,
   deleteAddress,
+  getCustomerAddresses,
   addAddressArea,
   getAllAddressAreas,
   editCustomer,

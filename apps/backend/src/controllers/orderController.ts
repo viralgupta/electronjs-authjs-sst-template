@@ -3,7 +3,7 @@ import { architect, carpanter, customer, driver, item, order, order_item } from 
 import {
   createOrderType,
   editOrderNoteType,
-  editOrderCustomerIdType,
+  addOrderCustomerIdType,
   editOrderCarpanterIdType,
   editOrderArchitectIdType,
   editOrderDriverIdType,
@@ -34,6 +34,14 @@ const createOrder = async (req: Request, res: Response) => {
     const calculateArchitectCommision = createOrderTypeAnswer.data.architect_id ? true : false;
 
     const createdOrder = await db.transaction(async (tx) => {
+
+      // check if duplicate items in order_items array
+      let order_item_id: string[] = [];
+      createOrderTypeAnswer.data.order_items.forEach((order_item) => order_item_id.push(order_item.item_id))
+      const hasDuplicate = new Set(order_item_id).size !== createOrderTypeAnswer.data.order_items.length;
+      if(hasDuplicate) {
+        throw new Error("Multiple Order Items of same Kind!!!, Cannot Create Order!");
+      }
 
       // update all the quantities of the items and return the updated quantities
       const quantities: {id: string, quantity: number}[] = [];
@@ -122,7 +130,7 @@ const createOrder = async (req: Request, res: Response) => {
         status: orderStatus,
         priority: createOrderTypeAnswer.data.priority,
         payment_status: calculatePaymentStatus(actualtotalValue, parseFloat(createOrderTypeAnswer.data.amount_paid ?? "0.00")),
-        delivery_date: createOrderTypeAnswer.data.delivery_date,
+        delivery_date: createOrderTypeAnswer.data.status == "Delivered" ? createOrderTypeAnswer.data.delivery_date === null ? new Date(): createOrderTypeAnswer.data.delivery_date : null,
         delivery_address_id: createOrderTypeAnswer.data.customer_id ? createOrderTypeAnswer.data.delivery_address_id : null,
         labour_frate_cost: createOrderTypeAnswer.data.labour_frate_cost,
         discount: createOrderTypeAnswer.data.discount,
@@ -217,18 +225,18 @@ const editOrderNote = async (req: Request, res: Response) => {
   }
 }
 
-const editOrderCustomerId = async (req: Request, res: Response) => {
-  const editOrderCustomerIdTypeAnswer = editOrderCustomerIdType.safeParse(req.body);
+const addOrderCustomerId = async (req: Request, res: Response) => {
+  const addOrderCustomerIdTypeAnswer = addOrderCustomerIdType.safeParse(req.body);
 
-  if(!editOrderCustomerIdTypeAnswer.success){
-    return res.status(400).json({success: false, message: "Input fields are not correct", error: editOrderCustomerIdTypeAnswer.error.flatten()})
+  if(!addOrderCustomerIdTypeAnswer.success){
+    return res.status(400).json({success: false, message: "Input fields are not correct", error: addOrderCustomerIdTypeAnswer.error.flatten()})
   }
 
   try {
 
     await db.transaction(async (tx) => {
       const oldOrder = await tx.query.order.findFirst({
-        where: (order, { eq }) => eq(order.id, editOrderCustomerIdTypeAnswer.data.order_id),
+        where: (order, { eq }) => eq(order.id, addOrderCustomerIdTypeAnswer.data.order_id),
         columns: {
           customer_id: true,
           delivery_address_id: true,
@@ -246,19 +254,19 @@ const editOrderCustomerId = async (req: Request, res: Response) => {
       
       // update total order value and balance for new customer
       const totalActualOrderValue = parseFloat(oldOrder.total_order_amount) - parseFloat(oldOrder.discount ?? "0.00")
-      const balance = (parseFloat(oldOrder.total_order_amount) - parseFloat(oldOrder.discount ?? "0.00")) + parseFloat(oldOrder.amount_paid ?? "0.00");
+      const balance = totalActualOrderValue - parseFloat(oldOrder.amount_paid ?? "0.00");
 
       await tx.update(customer).set({
         balance: sql`${customer.balance} + ${sql.placeholder("balance")}`,
-        total_order_value: sql`${customer.total_order_value} + ${sql.placeholder("TAOV")}`
-      }).where(eq(customer.id, editOrderCustomerIdTypeAnswer.data.customer_id)).execute({
+        total_order_value: sql`${customer.total_order_value} + ${sql.placeholder("TAOV")}`,
+      }).where(eq(customer.id, addOrderCustomerIdTypeAnswer.data.customer_id)).execute({
         balance: balance.toFixed(2),
         TAOV: totalActualOrderValue.toFixed(2)
       })
       
       // update customer id in order
       await tx.update(order).set({
-        customer_id: editOrderCustomerIdTypeAnswer.data.customer_id,
+        customer_id: addOrderCustomerIdTypeAnswer.data.customer_id,
         delivery_address_id: null
       })
     })
@@ -413,7 +421,7 @@ const editOrderDriverId = async (req: Request, res: Response) => {
       // update no of active orders from old order
       if(oldOrder.driver_id && oldOrder.status == "Pending"){
         await tx.update(driver).set({
-          activeOrders: sql`${driver.id} + 1`
+          activeOrders: sql`${driver.id} - 1`
         }).where(eq(driver.id, oldOrder.driver_id));
       }
 
@@ -478,10 +486,19 @@ const editOrderStatus = async (req: Request, res: Response) => {
         }).where(eq(driver.id, oldOrder.driver_id));
       }
 
+      const deliveryDate = new Date();
+
       // update order status
-      await tx.update(order).set({
-        status: editOrderStatusTypeAnswer.data.status
-      }).where(eq(order.id, editOrderStatusTypeAnswer.data.order_id));
+      if(editOrderStatusTypeAnswer.data.status == "Delivered") {
+        await tx.update(order).set({
+          status: editOrderStatusTypeAnswer.data.status,
+          delivery_date: deliveryDate
+        }).where(eq(order.id, editOrderStatusTypeAnswer.data.order_id));
+      } else {
+        await tx.update(order).set({
+          status: editOrderStatusTypeAnswer.data.status,
+        }).where(eq(order.id, editOrderStatusTypeAnswer.data.order_id));
+      }
     })
 
     return res.status(200).json({success: true, message: "Updated Order Status!!!"})    
@@ -531,7 +548,7 @@ const editOrderDeliveryDate = async (req: Request, res: Response) => {
         throw new Error("Unable to find the order!!!");
       }
 
-      if(oldOrder.status !== "Delivered"){
+      if(oldOrder.status === "Pending"){
         throw new Error("Cannot update delivery date for a pending order!!! Change order status first!")
       }
 
@@ -556,34 +573,42 @@ const editOrderDeliveryAddressId = async (req: Request, res: Response) => {
   try {
 
     await db.transaction(async (tx) => {
-      if(!editOrderDeliveryAddressIdTypeAnswer.data.customer_id) {
-        throw new Error("Customer needs to be added to link a address to a order!!!");
-      }
-
       // check if address belongs to customer
-      const customerId = editOrderDeliveryAddressIdTypeAnswer.data.customer_id;
-      if (customerId !== undefined && customerId !== null) {
-        const customerAddressIds = await tx.query.customer.findFirst({
-          where: (customer, { eq }) => eq(customer.id, customerId),
-          columns: {
-            id: true
-          },
-          with: {
-            addresses: {
-              columns: {
-                id: true
+      const oldOrder = await tx.query.order.findFirst({
+        where: (order, { eq }) => eq(order.id, editOrderDeliveryAddressIdTypeAnswer.data.order_id),
+        columns: {
+          customer_id: true
+        },
+        with: {
+          customer: {
+            with: {
+              addresses: {
+                columns: {
+                  id: true
+                }
               }
+            },
+            columns: {
+              id: true
             }
           }
-        });
-
-        if(!customerAddressIds) throw new Error("Unable to find Customer!!!");
-
-        const foundId = customerAddressIds.addresses.filter((address) => address.id == editOrderDeliveryAddressIdTypeAnswer.data.delivery_address_id);
-
-        if(foundId.length !== 1){
-          throw new Error("Address does not belong to the customer!!!")
         }
+      })
+
+      if(!oldOrder) {
+        throw new Error("Unable to find any order!!!");
+      }
+
+      const customerId = oldOrder.customer_id;
+
+      if(!customerId || customerId == null || !oldOrder.customer) {
+        throw new Error("Customer needs to be added to link a Address to order!!!");
+      }
+
+      const foundId = oldOrder.customer.addresses.filter((address) => address.id == editOrderDeliveryAddressIdTypeAnswer.data.delivery_address_id);
+
+      if(foundId.length !== 1){
+        throw new Error("Address does not belong to the customer!!!")
       }
 
       await tx.update(order).set({
@@ -650,12 +675,12 @@ const editOrderDiscount = async (req: Request, res: Response) => {
       if(parseFloat(editOrderDiscountTypeAnswer.data.discount) == parseFloat(oldOrder.discount ?? "0.00")){
         return;
       }
-
-      const discountDifference = parseFloat(editOrderDiscountTypeAnswer.data.discount) - parseFloat(oldOrder.discount ?? "0.00");
-      const operator: "Addition" | "Subtraction" = discountDifference > 0 ? "Addition" : "Subtraction";
-
+      
       // update balance for customer
       if(oldOrder.customer){
+        const discountDifference = parseFloat(editOrderDiscountTypeAnswer.data.discount) - parseFloat(oldOrder.discount ?? "0.00");
+        const operator: "Addition" | "Subtraction" = discountDifference > 0 ? "Addition" : "Subtraction";
+
         if(operator == "Addition"){
           await tx.update(customer).set({
             balance: sql`${customer.balance} - ${sql.placeholder("difference")}`,
@@ -721,7 +746,7 @@ const settleBalance = async (req: Request, res: Response) => {
 
       const newPaymentStatus = calculatePaymentStatus(actualTotalOrderValue, newAmountPaid);
 
-      // update the order amountPaid and Payment Status
+      // update the order amountPaid and Payment Status for order
       const updatedOrder = await tx.update(order).set({
         payment_status: newPaymentStatus,
         amount_paid: newAmountPaid.toFixed(2)
@@ -763,6 +788,14 @@ const editOrderItems = async (req: Request, res: Response) => {
   }
 
   try {
+
+    await db.transaction(async (tx) => {
+      const oldItems = await tx.query.order_item.findMany({
+        where: (order_item, { eq }) => eq(order_item.order_id, editOrderItemsTypeAnswer.data.order_id),
+      })
+
+      const sameItems = oldItems.filter((oldItem) => oldItem.item_id )
+    })
 
     return res.status(200).json({success: true, message: "Updated Order Status!!!"})
   } catch (error: any) {
@@ -953,7 +986,7 @@ const getOrder = async (req: Request, res: Response) => {
 export {
   createOrder,
   editOrderNote,
-  editOrderCustomerId,
+  addOrderCustomerId,
   editOrderCarpanterId,
   editOrderArchitectId,
   editOrderDriverId,
