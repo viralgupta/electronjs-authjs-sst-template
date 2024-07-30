@@ -788,13 +788,255 @@ const editOrderItems = async (req: Request, res: Response) => {
   }
 
   try {
+    // check if duplicate items in order_items array
+    let new_order_item_ids: string[] = [];
+    editOrderItemsTypeAnswer.data.order_items.forEach((order_item) => new_order_item_ids.push(order_item.item_id))
+    const hasDuplicate = new Set(new_order_item_ids).size !== editOrderItemsTypeAnswer.data.order_items.length;
+    if(hasDuplicate) {
+      throw new Error("Multiple Order Items of same Kind!!!, Cannot Create Order!");
+    }
 
     await db.transaction(async (tx) => {
-      const oldItems = await tx.query.order_item.findMany({
-        where: (order_item, { eq }) => eq(order_item.order_id, editOrderItemsTypeAnswer.data.order_id),
+      const oldOrder = await tx.query.order.findFirst({
+        where: (order, { eq }) => eq(order.id, editOrderItemsTypeAnswer.data.order_id),
+        columns: {
+          amount_paid: true,
+          architect_commision: true,
+          carpanter_commision: true,
+          discount: true,
+          status: true,
+          total_order_amount: true,
+          architect_id: true,
+          carpanter_id: true,
+          customer_id: true
+        },
+        with: {
+          order_items: {
+            columns: {
+              id: true,
+              item_id: true,
+              carpanter_commision: true,
+              architect_commision: true,
+              total_value: true,
+              quantity: true,
+              rate: true,
+            }
+          }
+        }
       })
 
-      const sameItems = oldItems.filter((oldItem) => oldItem.item_id )
+      if(!oldOrder) {
+        throw new Error("Unable to find the order!!!");
+      }
+
+      let old_order_item_ids: string[] = [];
+      oldOrder.order_items.forEach((oldItem) => old_order_item_ids.push(oldItem.item_id))
+
+      const sameItems = oldOrder.order_items.filter((oldItem) => new_order_item_ids.includes(oldItem.item_id));
+      const addedItems = editOrderItemsTypeAnswer.data.order_items.filter((newItem) => !old_order_item_ids.includes(newItem.item_id));
+      const removedItems = oldOrder.order_items.filter((oldItem) => !new_order_item_ids.includes(oldItem.item_id));
+      
+      let newCarpanterCommision = 0;
+      let newArchitectCommision = 0;
+      let new_total_order_amount = 0;
+
+      const quantities: {id: string, quantity: number}[] = [];
+      
+      sameItems.forEach(async (sameOldItem) => {
+        const sameNewItem = editOrderItemsTypeAnswer.data.order_items.find((newItem) => newItem.item_id == sameOldItem.item_id);
+
+        if(!sameNewItem) throw new Error("Unable to find the new items, this should not happen!!!, Contact Developer!!!");
+
+        newCarpanterCommision += parseFloat(sameNewItem.carpanter_commision ?? "0.00");
+        newArchitectCommision += parseFloat(sameNewItem.architect_commision ?? "0.00");
+        new_total_order_amount += parseFloat(sameNewItem.total_value ?? "0.00");
+
+        
+        // check quantity, rate, totalValue of the item is same or not, update item, update order_item
+
+        if(sameNewItem.quantity == sameOldItem.quantity && sameNewItem.rate == sameOldItem.rate && sameNewItem.total_value == sameOldItem.total_value){
+          return;
+        }
+
+        // update quantity of item
+        if(sameNewItem.quantity == sameOldItem.quantity){
+          return;
+        } else if(sameNewItem.quantity > sameOldItem.quantity){
+          // quantity increased
+          const updatedItem = await tx.update(item).set({
+            quantity: sql`${item.quantity} - ${sql.placeholder("difference")}`
+          }).where(eq(item.id, sameOldItem.item_id)).returning({
+            id: item.id,
+            quantity: item.quantity
+          }).execute({
+            difference: sameNewItem.quantity - sameOldItem.quantity
+          });
+
+          if(!updatedItem) {
+            throw new Error("Unable to find Item to update!!!")
+          }
+
+          quantities.push(updatedItem[0])
+        } else {
+          // quantity decreased
+          const updatedItem = await tx.update(item).set({
+            quantity: sql`${item.quantity} + ${sql.placeholder("difference")}`
+          }).where(eq(item.id, sameOldItem.item_id)).returning({
+            id: item.id,
+            quantity: item.quantity
+          }).execute({
+            difference: sameOldItem.quantity - sameNewItem.quantity
+          });
+
+          
+          if(!updatedItem) {
+            throw new Error("Unable to find Item to update!!!")
+          }
+
+          quantities.push(updatedItem[0])
+        }
+
+        // update order_item
+        await tx.update(order_item).set({
+          quantity: sameNewItem.quantity,
+          rate: sameNewItem.rate,
+          total_value: sameNewItem.total_value,
+          carpanter_commision: oldOrder.carpanter_id ? sameNewItem.carpanter_commision : null,
+          carpanter_commision_type: oldOrder.carpanter_id ? sameNewItem.carpanter_commision_type : null,
+          architect_commision: oldOrder.architect_id ? sameNewItem.architect_commision : null,
+          architect_commision_type: oldOrder.architect_id ? sameNewItem.architect_commision_type: null
+        }).where(eq(order_item.id, sameOldItem.id));
+      })
+      
+      addedItems.forEach(async (addedItem) => {
+        newCarpanterCommision += parseFloat(addedItem.carpanter_commision ?? "0.00");
+        newArchitectCommision += parseFloat(addedItem.architect_commision ?? "0.00");
+        new_total_order_amount += parseFloat(addedItem.total_value ?? "0.00");
+
+        // update quantity of item
+        const updatedItem = await tx.update(item).set({
+          quantity: sql`${item.quantity} - ${sql.placeholder("quantity")}`
+        }).where(eq(item.id, addedItem.item_id)).returning({
+          id: item.id,
+          quantity: item.quantity
+        }).execute({
+          quantity: addedItem.quantity
+        });
+
+        
+        if(!updatedItem) {
+          throw new Error("Unable to find Item to update!!!")
+        }
+
+        quantities.push(updatedItem[0])
+
+        // add order_item
+        await tx.insert(order_item).values({
+          order_id: editOrderItemsTypeAnswer.data.order_id,
+          item_id: addedItem.item_id,
+          quantity: addedItem.quantity,
+          rate: addedItem.rate,
+          total_value: addedItem.total_value,
+          carpanter_commision: oldOrder.carpanter_id ? addedItem.carpanter_commision : null,
+          carpanter_commision_type: oldOrder.carpanter_id ? addedItem.carpanter_commision_type : null,
+          architect_commision: oldOrder.architect_id ? addedItem.architect_commision : null,
+          architect_commision_type: oldOrder.architect_id ? addedItem.architect_commision_type : null
+        });
+      })
+      
+      removedItems.forEach(async (sameItem) => {
+        // update / add quantity of deleted items
+        await tx.update(item).set({
+          quantity: sql`${item.quantity} + ${sql.placeholder("quantity")}`
+        }).where(eq(item.id, sameItem.item_id)).execute({
+          quantity: sameItem.quantity
+        });
+
+        // delete order_item
+        await tx.delete(order_item).where(eq(order_item.id, sameItem.id));
+      });
+
+      // update carpanter commission
+      const oldCarpanterCommision = parseFloat(oldOrder.carpanter_commision ?? "0.00");
+      if(oldOrder.carpanter_id){
+
+        if(newCarpanterCommision == oldCarpanterCommision) return;
+
+        if (newCarpanterCommision > oldCarpanterCommision) {
+          const carpanterCommisionDiff = newCarpanterCommision - oldCarpanterCommision;
+          await tx.update(carpanter).set({
+            balance: sql`${carpanter.balance} + ${sql.placeholder("carpanterCommisionDiff")}`,
+          }).where(eq(carpanter.id, oldOrder.carpanter_id)).execute({
+            carpanterCommisionDiff: carpanterCommisionDiff.toFixed(2)
+          });
+        } else {
+          const carpanterCommisionDiff = oldCarpanterCommision - newCarpanterCommision;
+          await tx.update(carpanter).set({
+            balance: sql`${carpanter.balance} - ${sql.placeholder("carpanterCommisionDiff")}`,
+          }).where(eq(carpanter.id, oldOrder.carpanter_id)).execute({
+            carpanterCommisionDiff: carpanterCommisionDiff.toFixed(2)
+          });
+        }
+      }
+
+      // update architect commission
+      const oldArchitectCommision = parseFloat(oldOrder.architect_commision ?? "0.00");
+      if(oldOrder.architect_id){
+
+        if(newArchitectCommision == oldArchitectCommision) return;
+
+        if (newArchitectCommision > oldArchitectCommision) {
+          const architectCommisionDiff = newArchitectCommision - oldArchitectCommision;
+          await tx.update(architect).set({
+            balance: sql`${architect.balance} + ${sql.placeholder("architectCommisionDiff")}`,
+          }).where(eq(architect.id, oldOrder.architect_id)).execute({
+            architectCommisionDiff: architectCommisionDiff.toFixed(2)
+          });
+        } else {
+          const architectCommisionDiff = oldArchitectCommision - newArchitectCommision;
+          await tx.update(architect).set({
+            balance: sql`${architect.balance} - ${sql.placeholder("architectCommisionDiff")}`,
+          }).where(eq(architect.id, oldOrder.architect_id)).execute({
+            architectCommisionDiff: architectCommisionDiff.toFixed(2)
+          });
+        }
+      }
+      
+      // update total order value, carpanter commision, architect commision, payment status, status for order
+      const newPaymentStatus = calculatePaymentStatus((new_total_order_amount - parseFloat(oldOrder.discount ?? "0.00")), parseFloat(oldOrder.amount_paid ?? "0.00"));
+      const orderStatus = quantities.some(quantity => quantity.quantity < 0) ? "Pending" : oldOrder.status;
+      await tx.update(order).set({
+        total_order_amount: new_total_order_amount.toFixed(2),
+        carpanter_commision: oldOrder.carpanter_id ? newCarpanterCommision.toFixed(2) : null,
+        architect_commision: oldOrder.architect_id ? newArchitectCommision.toFixed(2) : null,
+        payment_status: newPaymentStatus,
+        status: orderStatus,
+      }).where(eq(order.id, editOrderItemsTypeAnswer.data.order_id));
+      
+      
+      // update total order value, balance for customer
+      const oldTotalOrderValue = parseFloat(oldOrder.total_order_amount);
+      if(oldOrder.customer_id){
+        if(new_total_order_amount == oldTotalOrderValue) return;
+
+        if(new_total_order_amount > oldTotalOrderValue){
+          const difference = new_total_order_amount - oldTotalOrderValue;
+          await tx.update(customer).set({
+            total_order_value: sql`${customer.total_order_value} + ${sql.placeholder("difference")}`,
+            balance: sql`${customer.balance} + ${sql.placeholder("difference")}`
+          }).where(eq(customer.id, oldOrder.customer_id)).execute({
+            difference: difference.toFixed(2)
+          });
+        } else {
+          const difference = oldTotalOrderValue - new_total_order_amount;
+          await tx.update(customer).set({
+            total_order_value: sql`${customer.total_order_value} - ${sql.placeholder("difference")}`,
+            balance: sql`${customer.balance} - ${sql.placeholder("difference")}`
+          }).where(eq(customer.id, oldOrder.customer_id)).execute({
+            difference: difference.toFixed(2)
+          });
+        }
+      }
     })
 
     return res.status(200).json({success: true, message: "Updated Order Status!!!"})
