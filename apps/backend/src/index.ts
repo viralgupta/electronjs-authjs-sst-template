@@ -1,6 +1,7 @@
 import express from "express";
 import { getAuthConfig } from "@auth/index";
 import { authenticatedUser } from "./middlewear/authenticateUser";
+import { allowedToken } from "./middlewear/allowedToken";
 import inventoryRouter from "./routes/inventoryRoutes";
 import architectRouter from "./routes/architectRoutes";
 import carpanterRouter from "./routes/carpanterRoutes";
@@ -17,6 +18,7 @@ app.use("/auth/*", getAuthConfig());
 
 app.use(express.json());
 // app.use("/api/*", authenticatedUser);
+// app.use("/api/*", allowedToken);
 
 app.use("/api/architect", architectRouter);
 app.use("/api/carpanter", carpanterRouter);
