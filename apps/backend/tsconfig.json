@@ -4,10 +4,10 @@
     "module": "esnext",
     "moduleResolution": "node",
     "paths": {
-      "@db/*": ["../../packages/db/*"],
-      "@auth/*": ["../../packages/auth/*"],
+      "@db/*": ["./db/*"],
+      "@auth/*": ["./auth/*"],
+      "@utils/*": ["./utils/*"],
       "@type/*": ["../../packages/types/*"],
-      "@utils/*": ["../../packages/utils/*"],
     }
   }
 }

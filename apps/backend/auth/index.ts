@@ -2,7 +2,7 @@ import { ExpressAuth } from "@auth/express";
 import AuthConfig from "./auth.config";
 import { Config } from "sst/node/config";
 
-export default function getAuthConfig() {
+function getAuthConfig() {
   process.env.AUTH_SECRET = Config.AUTH_SECRET;
 
   return ExpressAuth(AuthConfig);

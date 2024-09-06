@@ -32,4 +32,4 @@ yarn.lock
 /playwright-report/
 /playwright/.cache/
 
-public/private_key.pem
+public/private_key.txt
