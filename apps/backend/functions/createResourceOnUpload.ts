@@ -49,7 +49,6 @@ const createResourceOnUploadHandler = async (evt: any) => {
     }
 
   } catch (error) {
-    console.log("Unable to create resource in db:", error);
     deleteObject(objectKey, bucketName, client);
   }
   return;

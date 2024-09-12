@@ -98,8 +98,6 @@ const editItem = async (req: Request, res: Response) => {
 const editQuantity = async (req: Request, res: Response) => { 
   const editQuantityTypeAnswer = editQuantityType.safeParse(req.body);
 
-  console.log("running")
-
   if (!editQuantityTypeAnswer.success){
     return res.status(400).json({success: false, message: "Input fields are not correct", error: editQuantityTypeAnswer.error.flatten()})
   }

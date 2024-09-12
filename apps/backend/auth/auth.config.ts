@@ -32,7 +32,6 @@ const AuthConfig = {
         })
 
         if (!user) return null;
-
         else return {
           id: user.id,
           name: user.name,
@@ -42,9 +41,25 @@ const AuthConfig = {
     }),
   ],
   callbacks: {
-    redirect({ url }) {
-      return url;
+    redirect({ url, baseUrl }) {
+      const newurl = `${baseUrl}/authcallbackoverride?callback=${url}`
+      return newurl;
     },
+    jwt({ token, user }) {
+      if(user) {
+        token.id = user.id;
+        // @ts-ignore
+        token.isAdmin = user.isAdmin;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      // @ts-ignore
+      session.user.id = token.id;
+      // @ts-ignore
+      session.user.isAdmin = token.isAdmin;
+      return session;
+    }
   },
   pages: {
     signIn: "/",
@@ -52,7 +67,6 @@ const AuthConfig = {
     error: "/"
   },
   basePath: "/auth",
-  // redirectProxyUrl: "http://localhost:5173/",
 } satisfies AuthConfigType;
 
 export default AuthConfig;

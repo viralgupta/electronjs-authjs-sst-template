@@ -17,7 +17,12 @@ export function API({ stack }: StackContext) {
 
   const api = new Api(stack, "api", {
     routes: {
-      $default: "packages/functions/src/backend.handler",
+      $default: {
+        function: {
+          handler: "packages/functions/src/backend.handler",
+          timeout: 20
+        },
+      },
     },
   });
 

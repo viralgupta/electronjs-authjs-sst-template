@@ -19,7 +19,13 @@
     "paths": {
       "@/*": [
         "src/*"
-      ]
+      ],
+      "@types/*" : [
+        "../../packages/types/*"
+      ],
+      "@auth/*" : [
+        "../../packages/auth/*"
+      ],
     },
   },
   "include": ["src", "electron"],
