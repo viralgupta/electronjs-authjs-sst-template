@@ -21,7 +21,7 @@ app.use(cors());
 app.use("/auth/*", getAuthConfig());
 
 app.get("/authcallbackoverride", (req, res) => {
-  res.status(200).json({ url: req.query.callback ? req.query.callback : "http://localhost:5173" })
+  res.status(200).json({ url: req.query.callback ? req.query.callback : "/" })
 });
 
 app.use("/api/*", authenticatedUser);

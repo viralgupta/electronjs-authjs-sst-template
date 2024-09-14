@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Spinner from "../Spinner";
-import { getSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 const loginFormSchema = z.object({
   phone_number: z
@@ -47,8 +48,8 @@ const LoginForm = () => {
     resolver: zodResolver(loginFormSchema),
     reValidateMode: "onChange",
     defaultValues: {
-      phone_number: "1234567890",
-      otp: "123123",
+      phone_number: process.env.NODE_ENV == "development" ? "1234567890" : "",
+      otp: process.env.NODE_ENV == "development" ? "123456" : "",
     },
   });
 
@@ -121,13 +122,15 @@ const LoginForm = () => {
 
 const LoginDialog = ({ children, disabled }: { children: React.ReactNode, disabled: boolean }) => {
   return (
-    <Dialog>
-      <DialogTrigger asChild disabled={disabled} className="cursor-pointer">
+    <Dialog {...(disabled ? { open: false } : {})}>
+      <DialogTrigger disabled={disabled} className="cursor-pointer disabled:cursor-default md:block hidden">
         {children}
       </DialogTrigger>
       <DialogContent aria-describedby="Admin Login Form">
         <DialogHeader>
           <DialogTitle>Login Details</DialogTitle>
+        <DialogDescription className="p-0 m-0 h-0">
+        </DialogDescription>
         </DialogHeader>
         <LoginForm />
       </DialogContent>

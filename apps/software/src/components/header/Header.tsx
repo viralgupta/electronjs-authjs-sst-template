@@ -1,3 +1,4 @@
+import Logout from "./Logout"
 import { ThemeToggle } from "./ThemeToggle"
 import User from "./User"
 
@@ -8,10 +9,10 @@ const Header = () => {
         <img src="ctc.svg" alt="logo" className="h-16 mr-4" /> 
         Chintpurni Plywoods
       </div>
-      <div className="flex items-center">
-        {/* <Emergency/> */}
+      <div className="flex items-center space-x-4 mr-2">
         <ThemeToggle/>
         <User/>
+        <Logout/>
       </div>
     </div>
   )

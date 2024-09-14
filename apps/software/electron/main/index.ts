@@ -44,7 +44,7 @@ async function createWindow() {
 
   if (VITE_DEV_SERVER_URL) { // #298
     win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
   } else {
     win.loadFile(indexHtml);
   }
@@ -62,8 +62,7 @@ app.whenReady().then(() => {
 
   session.defaultSession.cookies.on("changed", (_event, cookie, cause, removed) => {
     if (cookie.name == "__Secure-authjs.session-token") {
-      if (removed && cause !== "overwrite") {
-        win?.webContents.send('Logout', "User logged out!!!");
+      if ((removed && cause !== "overwrite") || cookie.value == "") {
         app.quit();
       };
     }

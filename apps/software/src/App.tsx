@@ -3,7 +3,7 @@ import { toast } from "sonner"
 
 function App() {
   return (
-    <div className=''>
+    <div className='w-full h-full'>
       <Header/>
     </div>
   )

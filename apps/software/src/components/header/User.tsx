@@ -1,19 +1,23 @@
+import { useSession } from "next-auth/react";
 import LoginDialog from "./LoginDialog";
-import { useRecoilValue } from "recoil";
-import { userAtomState } from "@/store/user";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const User = () => {
-  const user = useRecoilValue(userAtomState);
-  console.log("user", user);
+  const { data, status } = useSession();
+
   return (
-    <LoginDialog disabled={!user ? false : true}>
-        <div className="flex p-2 items-center mx-4 border border-border rounded-md">
-          <UserIcon/>
-          &nbsp;{!user ? "Login" : user.name}
+    <LoginDialog disabled={status == "authenticated" || status == "loading"}>
+      {status == "loading" ? (
+        <Skeleton className="w-24 h-10 border border-border rounded-md disabled:cursor-default"/>
+      ) : (
+        <div className="flex p-2 items-center border border-border rounded-md disabled:cursor-default">
+          <UserIcon />
+          &nbsp;{status == "unauthenticated" ? "Login" : data?.user?.name}
         </div>
+      )}
     </LoginDialog>
   );
-}
+};
 
 const UserIcon = () => {
   return (
@@ -31,6 +35,6 @@ const UserIcon = () => {
       />
     </svg>
   );
-}
+};
 
 export default User;
