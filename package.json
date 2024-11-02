@@ -22,5 +22,8 @@
   "workspaces": [
     "packages/*",
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "concurrently": "^9.0.1"
+  }
 }

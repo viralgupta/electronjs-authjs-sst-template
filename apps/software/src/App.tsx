@@ -1,16 +1,14 @@
-import Header from "@/components/header/Header"
-import { toast } from "sonner"
+import ProtectedBody from "./Body";
+import User from "./components/User";
 
 function App() {
   return (
-    <div className='w-full h-full'>
-      <Header/>
+    <div className="w-full h-full">
+      <ProtectedBody>
+        <User />
+      </ProtectedBody>
     </div>
-  )
+  );
 }
 
-window.ipcRenderer.on("Error", (_ev, args) => {
-  toast.error(args)
-})
-
-export default App
+export default App;

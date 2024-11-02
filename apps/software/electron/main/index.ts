@@ -1,10 +1,12 @@
-import { app, BrowserWindow, shell, ipcMain, session } from 'electron'
+import { app, BrowserWindow, shell, session } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import * as cookieParser from 'cookie'
+import dotenv from 'dotenv';
 
+dotenv.config()
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,7 +37,7 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
+    title: 'Electron.js + Auth.js + SST Template',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload
@@ -58,15 +60,7 @@ async function createWindow() {
 
 
 app.whenReady().then(() => {
-  const filter = { urls: ['https://7slccwntv6.execute-api.ap-south-1.amazonaws.com/*'] }
-
-  session.defaultSession.cookies.on("changed", (_event, cookie, cause, removed) => {
-    if (cookie.name == "__Secure-authjs.session-token") {
-      if ((removed && cause !== "overwrite") || cookie.value == "") {
-        app.quit();
-      };
-    }
-  })
+  const filter = { urls: [`${process.env.VITE_API_BASE_URL}/*`] }
 
   // set cookies in request using electron class before sending
   session.defaultSession.webRequest.onBeforeSendHeaders(filter, async (details, callback) => {

@@ -4,7 +4,7 @@ import { API } from "./stacks/MyStack";
 export default {
   config(_input) {
     return {
-      name: "ctc-cms",
+      name: "electronjs-authjs-sst-template",
       region: "ap-south-1",
     };
   },

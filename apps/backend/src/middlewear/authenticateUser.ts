@@ -1,6 +1,6 @@
 import { getSession } from "@auth/express"
 import type { NextFunction, Request, Response } from "express"
-import AuthConfig from "@auth/auth.config"
+import AuthConfig from "../auth.config"
 import { Config } from "sst/node/config"
 
 export async function authenticatedUser(
